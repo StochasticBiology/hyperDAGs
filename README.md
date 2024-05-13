@@ -1,4 +1,4 @@
-# hyper-DAGs
+# hyperDAGs
 DAG skeletons on hypercubic transition networks
 
 ![image](https://github.com/StochasticBiology/hyper-DAGs/assets/50171196/44b0b540-2c85-442c-9f19-ccbf4ae042cb)
