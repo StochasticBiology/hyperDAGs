@@ -7,15 +7,22 @@
 library(igraph)
 library(stringr)
 library(DescTools)
+library(dplyr)
 library(stringdist)
 library(ggraph)
 library(ggplot2)
 
 set.seed(1)
 
-# Iain edit to have example built in to code
-inputfile = FALSE
-if(inputfile) {
+# thoughts so far:
+# 1 -- current -- build arborescence for ancestors, attach descendants starting from bottom and moving up
+# 2 -- build arborescence for all nodes, add edges where needed to capture interactions, prune afterwards
+# 3 -- (in parallel) shift branch points as far down the tree as possible
+
+# so far this can be "inline", "file", "TB" (1 above) or "TB2" (arborescence for all nodes)
+expt = "inline"
+
+if(expt == "file") {
   # inPut="test-tb"
   # inPut="test-mtdna-full"
   inPut="test-1"
@@ -24,82 +31,159 @@ if(inputfile) {
   dfraw = read.table(paste(inPut,".csv",sep = ""),header = F,as.is = T,colClasses = "numeric",sep=",")
   dfraw[nrow(dfraw)+1,]=rep(0,ncol(dfraw))
   df=unique(dfraw)
-} else {
+  
+  # store the binary name of each entry as a character
+  names=vector()
+  for (i in 1:nrow(df)) {
+    names[i]=paste(as.character(df[i,]),collapse = '')
+  }
+  
+} else if(expt == "inline") {
   df = matrix(c( 1,0,0,0,0,
                  0,1,0,0,0,
                  0,0,0,0,0,
                  1,0,0,1,0,
                  0,1,0,1,1,
                  1,0,1,1,0), ncol=5, byrow=TRUE)
+  # store the binary name of each entry as a character
+  names=vector()
+  for (i in 1:nrow(df)) {
+    names[i]=paste(as.character(df[i,]),collapse = '')
+    
+    # model sets of descendant nodes
+    dfdesc = matrix(c(1,0,1,1,0,
+                      0,1,1,1,1,
+                      0,1,0,1,1,
+                      1,1,1,1,0,
+                      0,1,1,1,1,
+                      1,1,1,1,1), ncol=5, byrow = TRUE)
+    
+    dfdesc = matrix(c(1,1,1,1,0,
+                      1,1,1,1,0,
+                      0,1,0,1,1,
+                      1,1,1,1,0,
+                      0,1,1,1,1,
+                      1,1,1,1,1), ncol=5, byrow = TRUE)
+    
+    # get string labels
+    descnames=vector()
+    for (i in 1:nrow(dfdesc)) {
+      descnames[i]=paste(as.character(dfdesc[i,]),collapse = '')
+    }
+    
+  }
+} else if(expt == "TB") {
+  tbdf = read.table("tb_drug.txt", colClasses = "character")
+  names = tbdf[,1]
+  descnames = tbdf[,2]
+} else if(expt == "TB2") {
+  tbdf = read.table("tb_drug.txt", colClasses = "character")
+  names = c(tbdf[,1],tbdf[,2])
 }
 
 # compute the distance matrix among all entries
-# store the binary name of each entry as a character
-names=vector()
-for (i in 1:nrow(df)) {
-  names[i]=paste(as.character(df[i,]),collapse = '')
-}
+
 # sort data, this way the always the minimum nearest neighbor will be chosen
 len=str_length(names[1])
 distMat=stringsimmatrix(names,method = "hamming")
 distMat=round(len-len*distMat)
+tdistMat = distMat
 distMat=distMat/distMat
 diag(distMat) <- len+1
 
 skeleton= data.frame(Anc=character(),
                      Desc=character())
 
-for (i in 1:(nrow(distMat)-1)) {
-  for (j in (i+1):nrow(distMat)) {
-    if (i==j) {
-      next
-    }
-    if ( as.numeric(StrDist(names[i],names[j],method = "hamming"))> abs((str_count(names[i], "1")-str_count(names[j], "1"))) ) {
-      distMat[i,j]=len+1
-      distMat[j,i]=len+1
-      next
-    }
-    if ( (str_count(names[i], "1")-str_count(names[j], "1"))==0 ) {
-      next
-    }
-    if ( (str_count(names[i], "1")-str_count(names[j], "1"))<0 ) {
-      distMat[i,j]=1
-      skeleton[nrow(skeleton)+1,]=c(names[i],names[j])
-    }else{
-      distMat[i,j]=2
-      skeleton[nrow(skeleton)+1,]=c(names[j],names[i])
-    }
-  }
+onecounts = sapply(names, str_count, "1")
+# Define the function f
+matdiff <- function(x, y) {
+  return(x-y)  # Example function, replace with your own function
 }
+
+onecountsdiff = outer(onecounts, onecounts, Vectorize(matdiff)) 
+absonecountsdiff = abs(onecountsdiff)
+
+# Kostas first condition:
+# if ( as.numeric(StrDist(names[i],names[j],method = "hamming"))> abs((str_count(names[i], "1")-str_count(names[j], "1"))) ) {
+set.1 = which(tdistMat > absonecountsdiff, arr.ind = TRUE)
+
+# Kostas third [our second] condition:
+# (str_count(names[i], "1")-str_count(names[j], "1"))>0 [where i<j]
+set.2 = which(onecountsdiff > 0, arr.ind = TRUE)
+set.2 = set.2[set.2[,1] < set.2[,2],]
+
+# Kostas second [our third] condition:
+# (str_count(names[i], "1")-str_count(names[j], "1"))<0 ) [where i<j]
+set.3 = which(onecountsdiff < 0, arr.ind = TRUE)
+set.3 = set.3[set.3[,1] < set.3[,2],]
+
+# condition 1 trumps conditions 2 and 3, so find indices unique to 2 and 3
+unique.2 = as.matrix(anti_join(as.data.frame(set.2), as.data.frame(set.1)))
+unique.3 = as.matrix(anti_join(as.data.frame(set.3), as.data.frame(set.1)))
+
+# apply distMat effects of these conditions
+distMat[set.1] = len+1
+distMat[unique.2] = 2
+distMat[unique.3] = 1
+
+# add the corresponding entries to the skeleton (ji for condition 2, ij for condition 3)
+skeleton = rbind(skeleton, data.frame(Anc=names[unique.2[,2]],
+                                      Desc=names[unique.2[,1]]))
+skeleton = rbind(skeleton, data.frame(Anc=names[unique.3[,1]],
+                                      Desc=names[unique.3[,2]]))
+
+# reduced version of Kostas' conditionals
+#for (i in 1:(nrow(distMat)-1)) {
+#  for (j in (i+1):nrow(distMat)) {
+#    if ( tdistMat[i,j] > absonecountsdiff[i,j]) { #abs(onecounts[i]-onecounts[j]) ) {
+#      distMat[i,j]=len+1
+#      distMat[j,i]=len+1
+#    } else if ( onecountsdiff[i,j]>0 ) {
+#      distMat[i,j]=2
+#      skeleton[nrow(skeleton)+1,]=c(names[j],names[i])
+#    } else if ( onecountsdiff[i,j]<0 ) {
+#      distMat[i,j]=1
+#      skeleton[nrow(skeleton)+1,]=c(names[i],names[j])
+#    }
+#  }
+#}
+
 # just to make sure we don't have self-loops
 skeleton=skeleton[which(skeleton$Anc != skeleton$Desc),]
 skeleton=unique(skeleton)
-
-
 
 # create the two sets for the bipartite graph B
 V=unique(union(skeleton[,1],skeleton[,2]))
 Vprim=unique(skeleton[,2])
 
-for (i in 1:length(Vprim)) {
-  Vprim[i]=paste(Vprim[i],"P",sep = "")
-}
+# IGJ: paste is already vectorised
+Vprim = paste(Vprim, "P", sep="")
+# replacing
+#for (i in 1:length(Vprim)) {
+#  Vprim[i]=paste(Vprim[i],"P",sep = "")
+#}
 
-B= data.frame(Anc=character(),
-              Desc=character())
-for (i in 1:nrow(skeleton)) {
-  B[nrow(B)+1,]=c(skeleton[i,1],paste(skeleton[i,2],"P",sep = ""))
-}
+# IGJ: vectorising this too
+B = data.frame(Anc=skeleton[,1], Desc=paste(skeleton[,2], "P", sep=""))
+# replacing
+#B= data.frame(Anc=character(),
+#              Desc=character())
+#for (i in 1:nrow(skeleton)) {
+#  B[nrow(B)+1,]=c(skeleton[i,1],paste(skeleton[i,2],"P",sep = ""))
+#}
 
 graphB <- graph_from_edgelist(as.matrix(B),directed = F)
 
 types= c(rep(0,length(V)),rep(1,length(Vprim)))
 names(types) <- c(V,Vprim)
 
-edgesB=vector()
-for (i in 1:nrow(B)) {
-  edgesB=c(edgesB,B[i,1],B[i,2])
-}
+# IGJ vectorising this
+edgesB = c(t(as.matrix(B)))
+# replacing
+#edgesB=vector()
+#for (i in 1:nrow(B)) {
+#  edgesB=c(edgesB,B[i,1],B[i,2])
+#}
 
 # create the bipartite graph B
 bp=make_bipartite_graph(types,edgesB)
@@ -126,6 +210,11 @@ length(tree.leaves)
 ######### Iain's code from here
 
 ggraph(graphB) + geom_edge_link() + geom_node_text(aes(label=name))
+
+#### the following code is only applicable to the "inline" case study
+if(expt != "inline") {
+  stop("Use the inline case study for this bit!")
+}
 
 # model sets of descendant nodes
 dfdesc = matrix(c(1,0,1,1,0,
