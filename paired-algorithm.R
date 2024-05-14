@@ -1,8 +1,7 @@
 # Kostas' implementation of the "Gutin algorithm"
 # https://link.springer.com/chapter/10.1007/978-3-540-68880-8_23 (page 3)
 # https://link.springer.com/chapter/10.1007/978-3-319-94830-0_5
-
-# there are lots of data-cleaning steps that could be optimised, avoiding loops and data conversions, but this can come later
+# Iain's edits following this, finding a first try for a DAG that spans observation pairs
 
 library(igraph)
 library(stringr)
@@ -11,16 +10,24 @@ library(dplyr)
 library(stringdist)
 library(ggraph)
 library(ggplot2)
+library(ggpubr)
 
 set.seed(1)
 
 # thoughts so far:
-# 1 -- current -- build arborescence for ancestors, attach descendants starting from bottom and moving up
-# 2 -- build arborescence for all nodes, add edges where needed to capture interactions, prune afterwards
+# 1 -- current -- build arborescence for ancestors, attach descendants starting from bottom and moving up (TB)
+# 2 -- build arborescence for all nodes, add edges where needed to capture interactions, prune afterwards (TB2, without pruning!)
 # 3 -- (in parallel) shift branch points as far down the tree as possible
 
-# so far this can be "inline", "file", "TB" (1 above) or "TB2" (arborescence for all nodes)
+# so far this can be "inline", "file", "TB" (1 above) or "TB2" (part of 2 above; arborescence for all nodes)
 expt = "inline"
+
+# excess branching score for minimisation
+branching.count = function(g) {
+  b = degree(g, mode="out")-1
+  b[b<0] = 0
+  return(sum(b))
+}
 
 if(expt == "file") {
   # inPut="test-tb"
@@ -212,33 +219,40 @@ length(tree.leaves)
 ggraph(graphB) + geom_edge_link() + geom_node_text(aes(label=name))
 
 #### the following code is only applicable to the "inline" case study
-if(expt != "inline") {
-  stop("Use the inline case study for this bit!")
-}
-
-# model sets of descendant nodes
-dfdesc = matrix(c(1,0,1,1,0,
-                  0,1,1,1,1,
-                  0,1,0,1,1,
-                  1,1,1,1,0,
-                  0,1,1,1,1,
-                  1,1,1,1,1), ncol=5, byrow = TRUE)
-
-dfdesc = matrix(c(1,1,1,1,0,
-                  1,1,1,1,0,
-                  0,1,0,1,1,
-                  1,1,1,1,0,
-                  0,1,1,1,1,
-                  1,1,1,1,1), ncol=5, byrow = TRUE)
-
-# get string labels
-descnames=vector()
-for (i in 1:nrow(dfdesc)) {
-  descnames[i]=paste(as.character(dfdesc[i,]),collapse = '')
+if(expt == "inline") {
+  
+  # model sets of descendant nodes
+  dfdesc = matrix(c(1,0,1,1,0,
+                    0,1,1,1,1,
+                    0,1,0,1,1,
+                    1,1,1,1,0,
+                    0,1,1,1,1,
+                    1,1,1,1,1), ncol=5, byrow = TRUE)
+  
+  dfdesc = matrix(c(1,1,1,1,0,
+                    1,1,1,1,0,
+                    0,1,0,1,1,
+                    1,1,1,1,0,
+                    0,1,1,1,1,
+                    1,1,1,1,1), ncol=5, byrow = TRUE)
+  
+  # get string labels
+  descnames=vector()
+  for (i in 1:nrow(dfdesc)) {
+    descnames[i]=paste(as.character(dfdesc[i,]),collapse = '')
+  }
+  ancs = names(V(graphB))
+} else if(expt == "TB") {
+  ancs = names(V(graphB))
+} else if(expt == "TB2") {
+  ancs = names = tbdf[,1]
+  descnames = tbdf[,2]
+} else {
+  stop("This case study isn't appropriate for the WIP descendant attachment!")
 }
 
 # ancestral states are those in the original data
-ancs = names(V(graphB))
+
 
 graphC = graphB
 
@@ -256,7 +270,7 @@ for(this.desc in unique(descnames)) {
   this.ancs = c()
   anc.refs = which(descnames == this.desc)
   for(i in anc.refs) {
-    this.ancs = c(this.ancs, paste0(as.character(df[i,]), collapse=""))
+    this.ancs = c(this.ancs, names[i])
   }
   print(paste0("Ancestors are ", this.ancs))
   # count the 1s in each; we want to start connecting from the one with most 1s
@@ -286,11 +300,12 @@ for(this.desc in unique(descnames)) {
 
 ggraph(graphC) + geom_edge_link() + geom_node_text(aes(label=name))
 
-dataset = data.frame(ancestors = apply(df, 1, paste0, collapse=""),
-                     descendants = apply(dfdesc, 1, paste0, collapse="") )
+dataset = data.frame(ancestors = names,
+                     descendants = descnames )
 
-png("ex-output.png", width=800*sf, height=300*sf, res=72*sf)
-ggarrange( ggraph(graphB) + geom_edge_link() + geom_node_text(aes(label=name)) + scale_x_continuous(expand = c(0.1, 0.1)),
-           ggraph(graphC) + geom_edge_link() + geom_node_text(aes(label=name)) + scale_x_continuous(expand = c(0.1, 0.1)),
-           ggtexttable(dataset, theme=ttheme(base_size=12)), nrow=1, labels=c("A", "B", "C"))
+sf = 2
+png(paste0("output-", expt, ".png", collapse=""), width=800*sf, height=300*sf, res=72*sf)
+ggarrange( ggraph(graphB) + geom_edge_link() + geom_node_text(aes(label=name)) + ggtitle(branching.count(graphB)) + scale_x_continuous(expand = c(0.1, 0.1)),
+           ggraph(graphC) + geom_edge_link() + geom_node_text(aes(label=name)) + ggtitle(branching.count(graphC)) + scale_x_continuous(expand = c(0.1, 0.1)),
+           ggtexttable(dataset, theme=ttheme(base_size=12)), nrow=1, labels=c("A", "B", "C"), label.y=0.1)
 dev.off()
