@@ -63,7 +63,7 @@ if(expt == "file") {
   dfraw = read.table(paste(inPut,".csv",sep = ""),header = F,as.is = T,colClasses = "numeric",sep=",")
   dfraw[nrow(dfraw)+1,]=rep(0,ncol(dfraw))
   df=unique(dfraw)
-  
+  L = ncol(dfraw)
   # store the binary name of each entry as a character
   names=vector()
   for (i in 1:nrow(df)) {
@@ -71,6 +71,7 @@ if(expt == "file") {
   }
   
 } else if(expt == "inline") {
+  L = 5
   df = matrix(c( 1,0,0,0,0,
                  0,1,0,0,0,
                  0,0,0,0,0,
@@ -105,10 +106,12 @@ if(expt == "file") {
     
   }
 } else if(expt == "TB") {
+  L = 10
   tbdf = read.table("tb_drug.txt", colClasses = "character")
   names = tbdf[,1]
   descnames = tbdf[,2]
 } else if(expt == "TB2") {
+  L = 10
   tbdf = read.table("tb_drug.txt", colClasses = "character")
   names = c(tbdf[,1],tbdf[,2])
 }
@@ -383,7 +386,6 @@ ggarrange( ggraph(graphB) + geom_edge_link() + geom_node_text(aes(label=name), a
 dev.off()
 
 # construct full hypercube for comparison
-L = 10
 pow2 = 2**((L-1):0)
 am = matrix(ncol=2)
 # produce list of decimal edges
@@ -399,6 +401,7 @@ for(i in 1:(2**L-1)) {
 # convert to graph with binary labels
 ambin = apply(am[2:nrow(am),], c(1,2), DecToBin, len=L)
 graphO <- graph_from_edgelist(as.matrix(ambin),directed = T)
+graphO = graph.union(graphO, graphB, graphC)
 graphO.layers = sapply(V(graphO)$name, str_count, "1")
 
 # figure out which edges in the complete hypercube are those that we found in graph B/C
@@ -414,6 +417,8 @@ indexes_C <- which(rowsO %in% common_rows_C)
 E(graphO)$skeleton_B = E(graphO)$skeleton_C = 0
 E(graphO)[indexes_B]$skeleton_B = 1
 E(graphO)[indexes_C]$skeleton_C = 1
-ggraph(graphO) + geom_edge_link(aes(edge_alpha=skeleton_B))
-
+ggarrange(
+ggraph(graphO) + geom_edge_link(aes(edge_alpha=factor(skeleton_B))) + scale_alpha_manual(values=c("0"=0.001, "1"=1)) + theme_graph(),
+ggraph(graphO) + geom_edge_link(aes(edge_alpha=factor(skeleton_C))) + scale_alpha_manual(values=c("0"=0.001, "1"=1)) + theme_graph()
+)
 # not quite right yet...
