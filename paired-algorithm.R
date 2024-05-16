@@ -12,6 +12,31 @@ library(ggraph)
 library(ggplot2)
 library(ggpubr)
 
+# binary to decimal function
+BinToDec <- function(x) {
+  sum(2^(which(rev(unlist(strsplit(as.character(x), "")) == 1))-1))
+}
+
+# decimal to binary function
+DecToBin <- function(x, len) {
+  s = c()
+  for(j in (len-1):0)
+  {
+    if(x >= 2**j) { s=c(s,1); x = x-2**j } else { s=c(s,0)}
+  }
+  return(paste(s, collapse=""))
+}
+
+# decimal to binary function, returning a numerical vector
+DecToBinV <- function(x, len) {
+  s = c()
+  for(j in (len-1):0)
+  {
+    if(x >= 2**j) { s=c(s,1); x = x-2**j } else { s=c(s,0)}
+  }
+  return(s)
+}
+
 set.seed(1)
 
 # thoughts so far:
@@ -20,7 +45,7 @@ set.seed(1)
 # 3 -- (in parallel) shift branch points as far down the tree as possible
 
 # so far this can be "inline", "file", "TB" (1 above) or "TB2" (part of 2 above; arborescence for all nodes)
-expt = "inline"
+expt = "TB2"
 
 # excess branching score for minimisation
 branching.count = function(g) {
@@ -214,9 +239,52 @@ write.table(final, file="gutinsAlgorithm-out.csv", row.names=FALSE, col.names=T,
 tree.leaves=setdiff(final[,2],final[,1])
 length(tree.leaves)
 
-######### Iain's code from here
-
+### IGJ code from here
 ggraph(graphB) + geom_edge_link() + geom_node_text(aes(label=name))
+
+### rewire
+is.compat = function(s1, s2) {
+  diffs = as.numeric(strsplit(s2, "")[[1]]) - as.numeric(strsplit(s1, "")[[1]])
+  if(min(diffs) < 0) {
+    return(Inf) 
+  } else if(sum(diffs) == 0) {
+    return(Inf)
+  } else {
+    return(sum(diffs))
+  }
+}
+is.compat("001", "011")
+
+compats = outer(names, names, Vectorize(is.compat)) 
+
+new.final = final
+for(i in 1:nrow(new.final)) {
+  anc = new.final[i,1]
+  desc.refs = which(new.final[,1]==anc) 
+  outdeg = length(desc.refs)
+  if(outdeg > 1) {
+    print(i)
+    print(paste("Thinking about ", anc, " descendants ", new.final[desc.refs,2]))
+    for(j in 1:outdeg) {
+      desc = new.final[desc.refs[j],2]
+      print(paste("  Thinking about ", desc))
+      desc.ref = which(names == desc)[1]
+      desc.compats = compats[,desc.ref]
+      best.new.ref = which(desc.compats == min(desc.compats) )[1]
+      print(paste("  best compats ", names[best.new.ref]))
+      
+      new.final[desc.refs[j],1] = names[best.new.ref]
+    }
+  }
+}
+
+
+new.graphB <- graph_from_edgelist(as.matrix(new.final),directed = T)
+new.graphB.layers = sapply(V(new.graphB)$name, str_count, "1")
+
+ggraph(new.graphB, layout="sugiyama", layers = new.graphB.layers) + geom_edge_link() + geom_node_text(aes(label=name))
+
+graphB = new.graphB
 
 #### the following code is only applicable to the "inline" case study
 if(expt == "inline") {
@@ -298,14 +366,54 @@ for(this.desc in unique(descnames)) {
   }
 }
 
+graphC.layers = sapply(V(graphC)$name, str_count, "1")
+
+ggraph(graphC, layout="sugiyama", layers = graphC.layers) + geom_edge_link() + geom_node_text(aes(label=name))
+
 ggraph(graphC) + geom_edge_link() + geom_node_text(aes(label=name))
 
 dataset = data.frame(ancestors = names,
                      descendants = descnames )
 
 sf = 2
-png(paste0("output-", expt, ".png", collapse=""), width=800*sf, height=300*sf, res=72*sf)
-ggarrange( ggraph(graphB) + geom_edge_link() + geom_node_text(aes(label=name)) + ggtitle(branching.count(graphB)) + scale_x_continuous(expand = c(0.1, 0.1)),
-           ggraph(graphC) + geom_edge_link() + geom_node_text(aes(label=name)) + ggtitle(branching.count(graphC)) + scale_x_continuous(expand = c(0.1, 0.1)),
+png(paste0("output-rewire-", expt, ".png", collapse=""), width=1600*sf, height=600*sf, res=72*sf)
+ggarrange( ggraph(graphB) + geom_edge_link() + geom_node_text(aes(label=name), angle=45, hjust=0) + ggtitle(branching.count(graphB)) + scale_x_continuous(expand = c(0.1, 0.1)),
+           ggraph(graphC) + geom_edge_link() + geom_node_text(aes(label=name), angle=45, hjust=0) + ggtitle(branching.count(graphC)) + scale_x_continuous(expand = c(0.1, 0.1)),
            ggtexttable(dataset, theme=ttheme(base_size=12)), nrow=1, labels=c("A", "B", "C"), label.y=0.1)
 dev.off()
+
+# construct full hypercube for comparison
+L = 10
+pow2 = 2**((L-1):0)
+am = matrix(ncol=2)
+# produce list of decimal edges
+for(i in 1:(2**L-1)) {
+  anc = DecToBinV(i-1, len=L)
+  to.1 = which(anc == 0)
+  for(j in 1:length(to.1)) {
+    desc = i-1+pow2[to.1[j]]
+    am = rbind(am, c(i-1, desc))
+  }
+}
+
+# convert to graph with binary labels
+ambin = apply(am[2:nrow(am),], c(1,2), DecToBin, len=L)
+graphO <- graph_from_edgelist(as.matrix(ambin),directed = T)
+graphO.layers = sapply(V(graphO)$name, str_count, "1")
+
+# figure out which edges in the complete hypercube are those that we found in graph B/C
+rowsB <- apply(get.edgelist(graphB), 1, paste, collapse = ",")
+rowsC <- apply(get.edgelist(graphC), 1, paste, collapse = ",")
+rowsO <- apply(get.edgelist(graphO), 1, paste, collapse = ",")
+common_rows_B <- intersect(rowsB, rowsO)
+common_rows_C <- intersect(rowsC, rowsO)
+indexes_B <- which(rowsO %in% common_rows_B)
+indexes_C <- which(rowsO %in% common_rows_C)
+
+# set a variable for those edges included in graphC
+E(graphO)$skeleton_B = E(graphO)$skeleton_C = 0
+E(graphO)[indexes_B]$skeleton_B = 1
+E(graphO)[indexes_C]$skeleton_C = 1
+ggraph(graphO) + geom_edge_link(aes(edge_alpha=skeleton_B))
+
+# not quite right yet...
