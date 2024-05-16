@@ -420,14 +420,14 @@ E(graphO)[indexes_C]$skeleton_C = 1
 ggarrange(
 ggraph(graphO) + 
   geom_edge_link(aes(edge_color=factor(skeleton_B), edge_alpha=factor(skeleton_B))) + 
-  scale_alpha_manual(values=c("0"=0.001, "1"=1)) + 
-  scale_color_manual(values=c("0"="#EEEEEE", "1"="black")) + 
+  scale_edge_alpha_manual(values=c("0"=1/L, "1"=1)) + 
+#  scale_edge_color_manual(values=c("0"="#EEEEEE", "1"="black")) + 
   theme_graph() + 
   theme(legend.position="none"),
 ggraph(graphO) + 
   geom_edge_link(aes(edge_color=factor(skeleton_C), edge_alpha=factor(skeleton_C))) + 
-  scale_alpha_manual(values=c("0"=0.001, "1"=1)) + 
-  scale_color_manual(values=c("0"="#EEEEEE", "1"="black")) + 
+  scale_edge_alpha_manual(values=c("0"=1/L, "1"=1)) + 
+#  scale_edge_color_manual(values=c("0"="#EEEEEE", "1"="black")) + 
   theme_graph() + 
   theme(legend.position="none")
 )
