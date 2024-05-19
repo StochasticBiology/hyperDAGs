@@ -56,8 +56,8 @@ branching.count = function(g) {
 
 if(expt == "file") {
   # inPut="test-tb"
-  # inPut="test-mtdna-full"
-  inPut="test-1"
+  inPut="test-mtdna-full"
+ # inPut="test-1"
   
   # read file with strings, add the all-zero string, and remove duplicates
   dfraw = read.table(paste(inPut,".csv",sep = ""),header = F,as.is = T,colClasses = "numeric",sep=",")
@@ -369,21 +369,69 @@ for(this.desc in unique(descnames)) {
   }
 }
 
-graphC.layers = sapply(V(graphC)$name, str_count, "1")
+#######
+# now prune edges we don't need
 
-ggraph(graphC, layout="sugiyama", layers = graphC.layers) + geom_edge_link() + geom_node_text(aes(label=name))
+graphD = graphC
+paths = list()
+plengths = rep(0, length(ancs))
+# for debugging, check that we have all the observations we need
+for(i in 1:length(ancs)) {
+  paths[[i]] = get.shortest.paths(graphD, from=ancs[i], to=descnames[i])
+  plengths[i] = length(paths[[i]]$vpath[[1]])
+}
 
-ggraph(graphC) + geom_edge_link() + geom_node_text(aes(label=name))
+# loop through (dynamic) edge set. *not* a very efficient approach
+eref = 1
+while(eref < length(E(graphD))) {
+  e = E(graphD)[eref]
+  # prune this edge
+  tmp = delete_edges(graphD, e)
+  plengths = rep(0, length(ancs))
+  paths = list()
+  # check if all our paths are still intact
+  for(i in 1:length(ancs)) {
+    paths[[i]] = get.shortest.paths(tmp, from=ancs[i], to=descnames[i])
+    plengths[i] = length(paths[[i]]$vpath[[1]])
+  }
+  # if so, remove this edge
+  if(min(plengths) > 0) {
+    graphD = tmp
+  } else {
+    eref = eref+1
+  }
+}
+branching.count(graphD)
+
+paths = list()
+plengths = rep(0, length(ancs))
+for(i in 1:length(ancs)) {
+  paths[[i]] = get.shortest.paths(graphD, from=ancs[i], to=descnames[i])
+  plengths[i] = length(paths[[i]]$vpath[[1]])
+}
+if(min(plengths) == 0) {
+  message("Pruning's gone wrong!")
+}
+
+graphD.layers = sapply(V(graphD)$name, str_count, "1")
 
 dataset = data.frame(ancestors = names,
                      descendants = descnames )
-
 sf = 2
 png(paste0("output-rewire-", expt, ".png", collapse=""), width=1600*sf, height=600*sf, res=72*sf)
-ggarrange( ggraph(graphB) + geom_edge_link() + geom_node_text(aes(label=name), angle=45, hjust=0) + ggtitle(branching.count(graphB)) + scale_x_continuous(expand = c(0.1, 0.1)),
-           ggraph(graphC) + geom_edge_link() + geom_node_text(aes(label=name), angle=45, hjust=0) + ggtitle(branching.count(graphC)) + scale_x_continuous(expand = c(0.1, 0.1)),
+ggarrange( ggraph(graphB) + 
+             geom_edge_link(color="#CCCCCC") + 
+             geom_node_text(aes(label=name), angle=45, hjust=0) + 
+             ggtitle(branching.count(graphB)) + scale_x_continuous(expand = c(0.1, 0.1)) +
+             theme_graph(),
+           ggraph(graphD, layout="sugiyama", layers=graphD.layers) + 
+             geom_edge_link(color="#CCCCCC") + 
+             geom_node_text(aes(label=name), angle=45, hjust=0, check_overlap = TRUE) + 
+             ggtitle(branching.count(graphD)) + scale_x_continuous(expand = c(0.1, 0.1)) +
+             theme_graph(),
            ggtexttable(dataset, theme=ttheme(base_size=12)), nrow=1, labels=c("A", "B", "C"), label.y=0.1)
 dev.off()
+
 
 # construct full hypercube for comparison
 pow2 = 2**((L-1):0)
