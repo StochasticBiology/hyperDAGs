@@ -260,6 +260,14 @@ simplest.DAG = function(ancnames, descnames) {
   # first get the simplest spanning arborescence for the union of the data
   s.a = simplest.arborescence(ancnames, descnames)
   
+  if(length(descnames) == 0) {
+    rlist = s.a
+    rlist$dataset = ancnames
+    rlist$best.graph = rlist$rewired.graph
+    rlist$best.bc = rlist$rewired.bc
+    return(rlist)
+  }
+  
   message("Starting Algorithm 2")
   
   graphC = s.a$rewired.graph

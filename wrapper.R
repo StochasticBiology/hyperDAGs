@@ -2,7 +2,7 @@ source("paired-algorithm-2.R")
 
 sf = 2
 
-for(expt in c("inline", "TBsimp", "TB")) {
+for(expt in c("inline", "TBsimp", "TB", "CGH", "cancer")) {
   
   if(expt == "mtDNA") {
     # inPut="test-tb"
