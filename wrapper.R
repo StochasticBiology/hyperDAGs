@@ -2,7 +2,8 @@ source("paired-algorithm.R")
 
 sf = 2
 
-for(expt in c("inline", "TBsimp", "TB", "CGH", "cancer")) {
+# mtDNA case study takes some minutes; ptDNA will take more
+for(expt in c("inline", "TBsimp", "TB", "CGH", "cancer", "mtDNA", "ptDNA")) {
   
   if(expt == "mtDNA") {
     dfraw = read.csv("mt-trans-manual.csv")
