@@ -1,4 +1,4 @@
-source("paired-algorithm-2.R")
+source("paired-algorithm.R")
 
 sf = 2
 
