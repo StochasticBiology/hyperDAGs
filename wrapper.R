@@ -5,22 +5,17 @@ sf = 2
 for(expt in c("inline", "TBsimp", "TB", "CGH", "cancer")) {
   
   if(expt == "mtDNA") {
-    # inPut="test-tb"
-    inPut="test-mtdna-full"
-    # inPut="test-1"
-    
-    # read file with strings, add the all-zero string, and remove duplicates
-    dfraw = read.table(paste(inPut,".csv",sep = ""),header = F,as.is = T,colClasses = "numeric",sep=",")
-    dfraw[nrow(dfraw)+1,]=rep(0,ncol(dfraw))
-    df=unique(dfraw)
-    L = ncol(dfraw)
-    # store the binary name of each entry as a character
-    names=vector()
-    for (i in 1:nrow(df)) {
-      names[i]=paste(as.character(df[i,]),collapse = '')
-    }
-    
-  } else if(expt == "cancer") {
+    dfraw = read.csv("mt-trans-manual.csv")
+    L = (ncol(dfraw)-2)/2
+    ancnames = apply(dfraw[,3:(2+L)], 1, paste0, collapse="")
+    descnames = apply(dfraw[,(2+L+1):(2+2*L)], 1, paste0, collapse="")
+  } else if(expt == "ptDNA") {
+    dfraw = read.csv("pt-trans-manual.csv")
+    L = (ncol(dfraw)-2)/2
+    ancnames = apply(dfraw[,3:(2+L)], 1, paste0, collapse="")
+    descnames = apply(dfraw[,(2+L+1):(2+2*L)], 1, paste0, collapse="")
+  }
+  else if(expt == "cancer") {
     df1 = read.csv("cancer-srcs.csv", header=TRUE)
     df2 = read.csv("cancer-dests.csv", header=TRUE)
     rownames(df1) = NULL
