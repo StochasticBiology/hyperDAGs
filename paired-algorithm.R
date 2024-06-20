@@ -361,6 +361,20 @@ simplest.DAG = function(ancnames, descnames) {
     message("Pruning's gone wrong!")
   }
   
+  message(". Connecting to root")
+  in_degrees <- degree(graphD, mode = "in")
+  zeroes = which(in_degrees == 0)
+  root.name = paste0(rep("0", str_length(ancnames[i])), collapse="")
+  root.label = which(V(graphD)$name == root.name)
+  if(length(root.label) == 0) {
+    graphD = add_vertices(graphD, n = 1)
+    V(graphD)$name[length(V(graphD)$name)] = root.name
+    root.label = length(V(graphD)$name)
+  }
+  for(this.zero in zeroes) {
+    graphD = add_edges(graphD, c(root.label, this.zero))
+  }
+  
   message(". Wrapping up")
   graphD.layers = sapply(V(graphD)$name, str_count, "1")
   
@@ -427,7 +441,9 @@ plot.stage.2 = function(graphs) {
     label.size = 2
   }
   if(L > 20) {
-    label.size = 0
+    label.size = 1
+    V(graphB)$name = 1:length(V(graphB))
+    V(graphD)$name = 1:length(V(graphD))
   }
   
   return(
