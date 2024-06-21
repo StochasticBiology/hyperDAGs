@@ -11,6 +11,7 @@ for(expt in c("inline", "TBsimp", "TB", "CGH", "cancer", "mtDNA", "ptDNA")) {
     L = (ncol(dfraw)-2)/2
     ancnames = apply(dfraw[,3:(2+L)], 1, paste0, collapse="")
     descnames = apply(dfraw[,(2+L+1):(2+2*L)], 1, paste0, collapse="")
+    write.table(data.frame(anc=ancnames,desc=descnames), "mt-trans.txt", quote = FALSE, sep=" ", row.names=FALSE, col.names=FALSE)
   } else if(expt == "ptDNA") {
     dfraw = read.csv("pt-trans-manual.csv")
     dfraw[,3:ncol(dfraw)] = 1-dfraw[,3:ncol(dfraw)]
@@ -65,7 +66,15 @@ for(expt in c("inline", "TBsimp", "TB", "CGH", "cancer", "mtDNA", "ptDNA")) {
   } 
   
   s.dag = simplest.DAG(ancnames, descnames)
-
+  if(length(descnames) != 0) {
+    spanned = transitions.spanned(s.dag, ancnames, descnames)
+    if(spanned == TRUE) {
+      message("-- transitions verified") 
+    } else {
+      message("-- transitions *NOT* verified")
+    }
+  }
+  
   sf = 3
   png(paste0("stage-1-", expt, ".png", collapse=""), width=600*sf, height=300*sf, res=72*sf)
   print(plot.stage.1(s.dag))
@@ -75,14 +84,4 @@ for(expt in c("inline", "TBsimp", "TB", "CGH", "cancer", "mtDNA", "ptDNA")) {
   dev.off()
 }
 
-V(graphD)$name2 = 1:length(V(graphD))
-png("debug.png", width=2000, height=2000)
-ggraph(graphD, layout="sugiyama", layers=graphD.layers) + 
-  geom_edge_link(color="#CCCCCC") + 
-  geom_node_text(aes(label=name2), size=label.size, angle=45, hjust=0) + #, check_overlap = TRUE) + 
-  ggtitle(branching.count(graphD)) + scale_x_continuous(expand = c(0.1, 0.1)) +
-  theme_graph()
-dev.off()
 
-test.name = "000000000000000000000001000000000000000000000000000000000000000000"
-which(descnames == test.name)

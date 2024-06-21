@@ -519,3 +519,19 @@ plot.full.cube = function(graphs) {
     )
   )
 }
+
+transitions.spanned = function(s.dag, ancnames, descnames) {
+  edges.ok = TRUE
+  for(i in 1:length(ancnames)) {
+    anc.name = ancnames[i]
+    desc.name = descnames[i]
+    g = s.dag$best.graph
+    anc.ref = which(V(g)$name==anc.name)
+    desc.ref = which(V(g)$name==desc.name)
+    if(!is.finite(distances(g, anc.ref, desc.ref))) {
+      message(paste0("- Lost connection ", anc.name, " -> ", desc.name))
+      edges.ok = FALSE
+    }
+  }
+  return(edges.ok)
+}
