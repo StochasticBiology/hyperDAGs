@@ -67,7 +67,7 @@ for(expt in c("inline", "TBsimp", "TB", "CGH", "cancer", "mtDNA", "ptDNA")) {
   
   s.dag = simplest.DAG(ancnames, descnames)
   if(length(descnames) != 0) {
-    spanned = transitions.spanned(s.dag, ancnames, descnames)
+    spanned = transitions.spanned(s.dag$best.graph, ancnames, descnames)
     if(spanned == TRUE) {
       message("-- transitions verified") 
     } else {
@@ -83,5 +83,6 @@ for(expt in c("inline", "TBsimp", "TB", "CGH", "cancer", "mtDNA", "ptDNA")) {
   print(plot.stage.2(s.dag))
   dev.off()
 }
+
 
 
