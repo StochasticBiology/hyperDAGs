@@ -1,41 +1,31 @@
-import csv
+import sys
 from itertools import combinations as choose
 from collections import defaultdict as D
 from collections import namedtuple as T
 
-Node = T("Node", "string e0 e1 dec name L")
-R = T("R", "source target")
+import networkx as nx
 
-ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-ALPHABET += ALPHABET.lower()
-ALPHABET += "0123456798"
-ALPHABET += "?!&#%-=+*^~'"
-ALPHABET *= 10
+Node = T("Node", "string e0 e1 dec")
 
 from datetime import datetime as dt
 
+INF = 2**31 - 1
 
-def x_coords(V):
-    y = D(list)
-    for v in V:
-        y[v.e1].append(v)
-    for k in y:
-        y[k] = sorted(y[k])
-    x = {}
-    for k in y:
-        for i in range(len(y[k])):
-            x[y[k][i]] = (i, len(y[k]))
-    return x
-
-
-def digraph_cost(G):
-    return sum(eb_val(G.out_degree(v)) for v in G.nodes())
+"""
+1. Read requirements
+2. Add ZERO → s for marked s
+3. Add edges
+4. For requirement: if satisfied then remove
+5. Transitive sparsification: if a→x and a→b and exists b→x path in REQ, remove a→x
+6. For a→b in req: find free sink(a)→source(b) path
+7. For a→b in req: find free a→b path
+8. For a→b in req: find a→b path
+"""
 
 
 def node(x):
-    name = "".join(ALPHABET[i] if x[i] == "1" else "_" for i in range(len(x)))
     e1 = sum(1 for e in x if e == "1")
-    return Node(x, len(x) - e1, e1, int(x, 2), name, len(x))
+    return Node(x, len(x) - e1, e1, int(x, 2))
 
 
 def dist(s, t):
@@ -44,14 +34,14 @@ def dist(s, t):
     for i in range(len(u)):
         if u[i] == v[i]:
             continue
-        if u[i] in (1, "1"):
+        if u[i] == "1":
             return float("inf")
         d += 1
     return d
 
 
 def incomp(u, v):
-    return dist(u, v) > 100 and dist(v, u) > 100
+    return dist(u, v) >= INF and dist(v, u) >= INF
 
 
 def eb_val(k):
@@ -60,7 +50,7 @@ def eb_val(k):
 
 def cost(H):
     I, O = degrees(H)
-    V = set(s for s, _ in H)
+    V = set(s for s, _ in H.edges())
     return sum(eb_val(O[v]) for v in V)
 
 
@@ -68,186 +58,155 @@ def degrees(H):
     nodes = set()
     I = D(int)
     O = D(int)
-    for s, t in H:
+    for s, t in H.edges():
         O[s] += 1
         I[t] += 1
     return I, O
 
 
-def reach(N, s):
-    for v in N[s]:
+def reach(G, s):
+    for v in G.neighbors(s):
         yield v
-        yield from reach(N, v)
+        yield from reach(G, v)
 
 
-def path(N, s, t, deg=None):
-    if deg is None:
-        deg = D(list)
-    L = len(s.string)
-    if not dist(s, t) < L + 1:
-        return None
+def implicit_neighbor(s):
+    string = s.string
+    for i, e in enumerate(string):
+        if e == "0":
+            yield node(string[:i] + "1" + string[i + 1 :])
+
+
+def implicit_path(s, t, H=None):
+    # if H is not None we will try to find a path without branching
+    if not dist(s, t) < 2**31:
+        raise Exception()
     if s == t:
         return []
-    for v in N[s]:
-        if len(deg[v]) > 2:
-            continue
-        if dist(v, t) < L + 1:
-            p = path(N, v, t)
-            if p is not None:
-                return [v] + p
 
-
-def _OUT(v):
-    s = v.string
-    for i in range(v.L):
-        if s[i] == "0":
-            yield node(s[:i] + "1" + s[i + 1 :])
-
-
-def implicit_path(L, s, t):
-    assert L == len(s.string) == len(t.string)  # , f"{L=}, {s=}, {t=}"
-    if s == t:
-        return []
-    if dist(s, t) > L:
-        return None
-    for v in _OUT(s):
-        if dist(v, t) < L + 1:
-            p = implicit_path(L, v, t)
-            if p is not None:
-                return [v] + p
+    for v in implicit_neighbor(s):
+        if H and v in H.nodes() and not H.neighbors(v):
+            if dist(v, t) < INF:
+                p = implicit_path(v, t, H=H)
+                if p is not None:
+                    return [v] + p
+        elif H and v in H.nodes():
+            possible = H.neighbors(v)
+            for u in possible:
+                v = u
+                if dist(v, t) < INF:
+                    p = implicit_path(v, t, H=H)
+                    if p is not None:
+                        return [v] + p
+        else:
+            if dist(v, t) < INF:
+                p = implicit_path(v, t)
+                if p is not None:
+                    return [v] + p
 
 
 def sinks(N, s):
     """Given a graph N and a vertex s, output all sinks reachable from s"""
-    if not N[s]:
+    if s not in N.nodes():
+        return
+    if not N.neighbors(s):
         yield s
-    for v in N[s]:
+    for v in N.neighbors(s):
         yield from sinks(N, v)
 
 
-def clean_requirements(N, reqs):
-    print("cleaning...")
-    to_delete = set()
-    for s, t in reqs:
-        if t in reach(N, s):
-            to_delete.add(R(s, t))
-    for r in to_delete:
-        reqs.remove(r)
-    print("done")
+def clean(E, G):
+    """Remove from E the requirements satisfied in G"""
+    sat = set()
+    V = set(G.nodes())
+    for s, t in E:
+        if s in V and t in V and nx.has_path(G, s, t):
+            sat.add((s, t))
+    retval = bool(sat)
+    for r in sat:
+        # print("Remove", r)
+        E.remove(r)
+    return retval
 
 
-def main(fname):
+def main():
     start = dt.now()
+    G = []
+    for line in sys.stdin:
+        e = line.split()
+        a, b = node(e[0]), node(e[1])
+        if dist(a, b) >= INF:
+            a, b = b, a
+        assert dist(a, b) < len(a.string), f"dist({a},{b}) = {dist(a,b)}"
+        G.append((a, b))
 
-    V = set()
-    with open(fname, "r") as fin:
-        rows = csv.reader(fin)
-        G = []
-        next(rows)
-        for x, y in rows:
-            s = node(x)
-            t = node(y)
-            V |= set((s, t))
-            if dist(s, t) <= s.L:
-                r = R(s, t)
-            elif dist(t, s) <= s.L:
-                r = R(t, s)
-            else:
-                print(
-                    f"Impossible requirement, {s.string}, {t.string}", file=sys.stderr
-                )
-            G.append(r)
-    L = s.L
-    v_Z = node("0" * L)
+    ZERO = node("0" * len(G[0][0].string))
+    for s, t in list(G):
+        G.append((ZERO, s))
+        G.append((ZERO, t))
 
-    for v in V:
-        if v.dec:
-            G.append(R(v_Z, v))
+    E = set(G)
+    H = nx.DiGraph()
 
-    E = sorted(set(G))
-    print(len(E), "requirements")
-    H = set()
-    for s, t in sorted(E):
+    # ADD ALL EDGES
+    for s, t in E:
         d = dist(s, t)
         if d == 1:
-            H.add(R(s, t))
+            H.add_edge(s, t)
 
-    for s, t in E:
-        assert dist(s, t) <= L, f"{s.L}, {t.L}, {L}, {dist(s, t)}"
+    clean(E, H)
 
-    I, O = degrees(H)
-    nodes = set()
-    for s, t in H:
-        nodes.add(s)
-        nodes.add(t)
-
-    # Create neigh
-    N = D(list)
-    for s, t in H:
-        N[s].append(t)
-
-    clean_requirements(N, E)
-
-    for s, t in E:
-        ss = sinks(N, s)
-        found = False
-        for v in ss:
-            if dist(v, t) < 100:
-                found = True
-
-    last_val = len(E) + 1
-    while 1:
-        if last_val == len(E):
-            break
-        last_val = len(E)
+    update = True
+    while update:
+        update = False
 
         for s, t in E:
-            ss = sinks(N, s)
+            ss = sinks(H, s)
             for x in ss:
-                P = implicit_path(L, x, t)
+                if dist(x, t) >= INF:
+                    continue
+                P = implicit_path(x, t, H)
                 if P:
                     p = [x] + P
                     for i in range(len(P) - 1):
-                        H.add((P[i], P[i + 1]))
-                        N[P[i]].append(P[i + 1])
-                        N[P[i]] = sorted(set(N[P[i]]))
-        clean_requirements(N, E)
-
-    clean_requirements(N, E)
+                        H.add_edge(P[i], P[i + 1])
+                else:
+                    P = implicit_path(x, t)
+                    if P:
+                        p = [x] + P
+                        for i in range(len(P) - 1):
+                            H.add_edge(P[i], P[i + 1])
+        update = clean(E, H)
 
     for s, t in E:
-        P = implicit_path(L, s, t)
+        P = implicit_path(s, t)
         if not P:
-            print("\n\n\nNO PATH!\n", L, s, t, dist(s, t))
-        for i in range(len(P) - 1):
-            H.add((P[i], P[i + 1]))
-            N[P[i]].append(P[i + 1])
-            N[P[i]] = sorted(set(N[P[i]]))
+            continue
 
-    clean_requirements(N, E)
+        for i in range(len(P) - 1):
+            H.add_edge(P[i], P[i + 1])
+
+    clean(E, H)
+
+    for s, t in E:
+        P = implicit_path(s, t)
+        if not P:
+            continue
+
+        for i in range(len(P) - 1):
+            H.add_edge(P[i], P[i + 1])
+
+    clean(E, H)
 
     print("Cost", cost(H))
 
     end = dt.now()
     ds = (end - start).total_seconds()
     print(round(ds * 1000, 3), "ms")
-    print(len(E), "remaining")
-    for s, t in sorted(E):
-        print("\tR:", s.string, t.string, dist(s, t))
 
-    with open("g.csv", "w") as fout:
-        print("source,target", file=fout)
-        for s, t in H:
-            print(f"{s.string},{t.string}", file=fout)
-
-    return H
+    with open("_out", "w") as fout:
+        for s, t in H.edges():
+            print(s.string, t.string, file=fout)
 
 
-if __name__ == "__main__":
-    import sys
-
-    if len(sys.argv) != 2:
-        exit("usage: pypy3 disjointp.py data/mt-trans-manual.txt")
-        exit("usage: pypy3 disjointp.py data/pt-trans-manual.txt")
-    fname = sys.argv[1]
-    H = main(fname)
+main()
