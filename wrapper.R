@@ -7,6 +7,14 @@ local.python = "/opt/homebrew/Caskroom/miniconda/base/bin/python3"
 expt.index = 0
 expt.out = list()
 
+data.properties = function(fit) {
+  str = paste0("L = ", str_length(fit$dataset$ancestors[1]),
+               "; ntrans = ", nrow(unique(fit$dataset)),
+               "; nuniq = ", length(unique(c(fit$dataset$ancestors, fit$dataset$descendants)))
+               )
+  message(str)
+}
+
 # mtDNA case study takes some minutes; ptDNA will take more
 for(expt in c("inline", "TBsimp", "TB", "CGH", "cancer", "mtDNA", "ptDNA")) {
   expt.index = expt.index + 1
