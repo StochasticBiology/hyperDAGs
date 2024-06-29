@@ -125,11 +125,11 @@ print(ggarrange(plot.stage.p(expt.out[[2]]$raw.graph) + title.style,
                 labels=c("A", "B", "C")))
 dev.off()
 
-png("fig-tb.png", width=500*sf, height=300*sf, res=72*sf)
+png("fig-tb.png", width=600*sf, height=500*sf, res=72*sf)
 print(plot.stage.p(expt.out[[3]]$best.graph) + title.style)
 dev.off()
 
-png("fig-cancer.png", width=500*sf, height=300*sf, res=72*sf)
+png("fig-cancer.png", width=600*sf, height=300*sf, res=72*sf)
 print(plot.stage.p(expt.out[[5]]$best.graph) + title.style)
 dev.off()
 
