@@ -372,7 +372,9 @@ simplest.DAG = function(ancnames, descnames) {
     root.label = length(V(graphD)$name)
   }
   for(this.zero in zeroes) {
-    graphD = add_edges(graphD, c(root.label, this.zero))
+    if(this.zero != root.label) {
+      graphD = add_edges(graphD, c(root.label, this.zero))
+    }
   }
   
   message(". Wrapping up")
