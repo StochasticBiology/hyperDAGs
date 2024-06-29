@@ -219,15 +219,15 @@ simplest.arborescence = function(ancnames, descnames=NULL) {
     desc.refs = which(new.final[,1]==anc) 
     outdeg = length(desc.refs)
     if(outdeg > 1) {
-#      print(i)
-#      print(paste("Thinking about ", anc, " descendants ", new.final[desc.refs,2]))
+      #      print(i)
+      #      print(paste("Thinking about ", anc, " descendants ", new.final[desc.refs,2]))
       for(j in 1:outdeg) {
         desc = new.final[desc.refs[j],2]
-#        print(paste("  Thinking about ", desc))
+        #        print(paste("  Thinking about ", desc))
         desc.ref = which(names == desc)[1]
         desc.compats = compats[,desc.ref]
         best.new.ref = which(desc.compats == min(desc.compats) )[1]
-#        print(paste("  best compats ", names[best.new.ref]))
+        #        print(paste("  best compats ", names[best.new.ref]))
         
         new.final[desc.refs[j],1] = names[best.new.ref]
       }
@@ -276,11 +276,11 @@ simplest.DAG = function(ancnames, descnames) {
   message(". Adding edges")
   # loop through descendant nodes
   for(this.desc in unique(descnames)) {
-#    print(paste0("Thinking about ", this.desc))
+    #    print(paste0("Thinking about ", this.desc))
     
     # if this descendant node doesn't exist in the graph, add it
     if(!(this.desc %in% V(graphC)$name)) {
-#      print(paste0("Adding ", this.desc))
+      #      print(paste0("Adding ", this.desc))
       graphC = add_vertices(graphC, n = 1)
       V(graphC)$name[length(V(graphC)$name)] = this.desc
     }
@@ -290,28 +290,28 @@ simplest.DAG = function(ancnames, descnames) {
     for(i in anc.refs) {
       this.ancs = c(this.ancs, ancnames[i])
     }
-#    print(paste0("Ancestors are ", this.ancs))
+    #    print(paste0("Ancestors are ", this.ancs))
     # count the 1s in each; we want to start connecting from the one with most 1s
     count1s = rep(0, length(this.ancs))
     for(i in 1:length(this.ancs)) {
       count1s[i] = str_count(this.ancs[i], "1")
     }
     count1order = order(count1s, decreasing=TRUE)
-#    print(count1order)
+    #    print(count1order)
     # loop through ancestors for this descendant
     for(i in count1order) {
       this.this.ancs = this.ancs[i]
-#      print(paste0(" Thinking about ", this.this.ancs))
+      #      print(paste0(" Thinking about ", this.this.ancs))
       
       # if we don't have a path from this ancestor, add an edge
       path = get.shortest.paths(graphC, from=this.this.ancs, to=this.desc)
       if(length(path$vpath[[1]]) == 0) {
         from_id = which(V(graphC)$name == this.this.ancs)
         to_id = which(V(graphC)$name == this.desc)
-#        print(paste0(" Adding ", this.this.ancs, "-", this.desc, " = ", from_id, " ", to_id))
+        #        print(paste0(" Adding ", this.this.ancs, "-", this.desc, " = ", from_id, " ", to_id))
         graphC = add_edges(graphC, c(from_id, to_id))
       } else {
-#        print(paste0(" Already have path"))
+        #        print(paste0(" Already have path"))
       }
     }
   }
@@ -458,8 +458,33 @@ plot.stage.2 = function(graphs) {
                  ggtitle(branching.count(graphD)) + scale_x_continuous(expand = c(0.1, 0.1)) +
                  theme_graph(),
                #ggtexttable(dataset, theme=ttheme(base_size=12)), nrow=1, labels=c("A", "B", "C"), 
-               nrow = 1, labels=c("A", "B"),
-               label.y=0.1)
+               nrow = 1, labels=c("A", "B")
+               )
+  )
+}
+
+# plot the simplest spanning arborescence and simplest transition-spanning DAG
+plot.stage.p = function(graphD) {
+  # extract graphs from algorithm output and assign layers
+  graphD.layers = sapply(V(graphD)$name, str_count, "1")
+  L = str_length(V(graphD)$name[1])
+  
+  # decide on label size (heuristic, for clarity)
+  label.size = 3
+  if(L > 5) {
+    label.size = 2
+  }
+  if(L > 20) {
+    label.size = 1
+    V(graphD)$name = 1:length(V(graphD))
+  }
+  
+  return(
+    ggraph(graphD, layout="sugiyama", layers=graphD.layers) + 
+      geom_edge_link(color="#CCCCCC") + 
+      geom_node_text(aes(label=name), size=label.size, angle=45, hjust=0) + #, check_overlap = TRUE) + 
+      ggtitle(paste0("B = ", branching.count(graphD), collapse="")) + scale_x_continuous(expand = c(0.1, 0.1)) +
+      theme_graph()
   )
 }
 
