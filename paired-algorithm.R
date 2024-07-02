@@ -70,6 +70,19 @@ is.compat = function(s1, s2) {
   }
 }
 
+# check compatibility between two bitstrings, reported as a distance
+is.compat.num = function(s1, s2) {
+  diffs = s2-s1
+  sumdiffs = sum(diffs)
+   if(min(diffs) < 0) {
+    return(Inf) 
+  } else if(sumdiffs == 0) {
+    return(Inf)
+  } else {
+    return(sumdiffs)
+  }
+}
+
 # compute the simplest spanning arborescence for a dataset
 simplest.arborescence = function(ancnames, descnames=NULL) {
   
@@ -209,8 +222,14 @@ simplest.arborescence = function(ancnames, descnames=NULL) {
   ### rewire
   message(". Computing compatibilities for rewiring")
   
-  compats = outer(names, names, Vectorize(is.compat)) 
+ num.names = lapply(strsplit(names, ""), as.numeric)
   
+  #Sys.time()
+  #compats = outer(names, names, Vectorize(is.compat)) 
+  #Sys.time()
+  compats = outer(num.names, num.names, Vectorize(is.compat.num))
+  #Sys.time()
+    
   message(". Rewiring")
   
   new.final = final
