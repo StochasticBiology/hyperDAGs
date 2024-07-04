@@ -509,6 +509,56 @@ plot.stage.p = function(graphD) {
   )
 }
 
+plot.weights = function(graphD, labels=c(""), thresh=5) {
+  # extract graphs from algorithm output and assign layers
+  graphD.layers = sapply(V(graphD)$name, str_count, "1")
+  L = str_length(V(graphD)$name[1])
+  if(labels[1] == "") {
+    labels = as.character(1:L)
+  }
+  graphD.size = neighborhood.size(graphD, L+1, mode="out")
+  E(graphD)$thickness = as.numeric(graphD.size[ends(graphD, es = E(graphD), names = FALSE)[, 2]])
+  this.ends = ends(graphD, es=E(graphD))
+  srcs = strsplit(this.ends[,1], split="")
+  dests = strsplit(this.ends[,2], split="")
+  for(i in 1:nrow(this.ends)) {
+    E(graphD)$label[i] = paste0("+", paste0(labels[which(srcs[[i]]!=dests[[i]])], collapse=","), collapse="")
+  }
+  # decide on label size (heuristic, for clarity)
+  label.size = 3
+  if(L > 5) {
+    label.size = 2
+    V(graphD)$plotname = V(graphD)$name
+    edge.label.size = 3
+  }
+  if(L > 20) {
+    label.size = 1
+    V(graphD)$plotname = 1:length(V(graphD))
+    edge.label.size = 2
+  }
+  
+  full.plot = ggraph(graphD, layout="sugiyama", layers=graphD.layers) + 
+    geom_edge_link(color="#CCCCCC", label_size= edge.label.size, angle_calc = "across", label_colour = "grey", aes(label=label, alpha=log(as.numeric(thickness)+1))) + 
+    geom_node_text(aes(label=plotname), size=label.size, angle=45, hjust=0) + #, check_overlap = TRUE) + 
+    ggtitle(paste0("B = ", branching.count(graphD), collapse="")) + scale_x_continuous(expand = c(0.1, 0.1)) +
+    theme_graph()
+  
+  graphE = delete_edges(graphD, which(as.numeric(E(graphD)$thickness) < thresh))
+  degrees = degree(graphE)
+  graphE = delete_vertices(graphE, which(degrees == 0))
+  graphE.layers = sapply(V(graphE)$name, str_count, "1")
+  
+  label.size = 0
+  thresh.plot = ggraph(graphE, layout="sugiyama", layers=graphE.layers) + 
+    geom_edge_link(color="#AAAAFF", label_size= edge.label.size, angle_calc = "across", label_colour = "black", 
+                   aes(label=label, edge_width = as.numeric(thickness), alpha=as.numeric(thickness))) + 
+    geom_node_text(aes(label=name), size=label.size, angle=45, hjust=0) + #, check_overlap = TRUE) + 
+    scale_edge_width(limits=c(0,NA)) + theme_graph() + theme(legend.position="none")
+
+return(list(full.plot=full.plot, thresh.plot=thresh.plot,
+            full.graph=graphD, thresh.graph=graphE))
+}
+
 # untested: plot the simplest graphs embedded in the full hypercube
 plot.full.cube = function(graphs) {
   L = graphs$len

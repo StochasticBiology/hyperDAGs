@@ -1,5 +1,7 @@
 source("paired-algorithm.R")
 
+# runtime ~4h on modern Mac
+
 sf = 3
 # if there are multiple python3 installs on the machine, use this to set the required path
 # local.python = "python3"
@@ -13,6 +15,21 @@ data.properties = function(fit) {
                "; nuniq = ", length(unique(c(fit$dataset$ancestors, fit$dataset$descendants)))
                )
   message(str)
+}
+
+write.single.steps = function(trans, L, fname) {
+  trans.set = matrix(ncol=2)
+  for(i in 1:nrow(trans)) {
+    src = DecToBinV(trans[i,1], L)
+    dest = DecToBinV(trans[i,2], L)
+    changes = which(dest-src == 1)
+    curr = src
+    for(j in changes) {
+     trans.set = rbind(trans.set, c(BinToDec(curr), BinToDec(curr)+2**(L-j) ))
+      curr[j] = 1
+    }
+  }
+  write.table(unique(trans.set[2:nrow(trans.set),]), fname, row.names=FALSE, col.names=FALSE, quote=FALSE)
 }
 
 # mtDNA case study takes some minutes; ptDNA will take more
@@ -64,6 +81,7 @@ for(expt in c("inline", "TBsimp", "TB", "CGH", "cancer", "mtDNA", "ptDNA")) {
     descnames=apply(dfdesc, 1, paste0, collapse = '')
   } else if(expt == "TB") {
     tbdf = read.table("tb_drug.txt", colClasses = "character")
+    L = str_length(tbdf[1,1])
     ancnames = tbdf[,1]
     descnames = tbdf[,2]
   } else if(expt == "TBsimp") {
@@ -72,14 +90,18 @@ for(expt in c("inline", "TBsimp", "TB", "CGH", "cancer", "mtDNA", "ptDNA")) {
     descnames = tbdf[,2]
     ancnames = substr(ancnames, 1, 5)
     descnames = substr(descnames, 1, 5)
+    L = 5
   } else if(expt == "CGH") {
     tbdf = read.table("ovarian_cgh_header.csv", header=TRUE, colClasses = "character", sep = " ")
     zero.site = paste0(rep("0", ncol(tbdf)), collapse="")
+    L = nrow(tbdf)
     ancnames = rep(zero.site, nrow(tbdf))
     descnames = apply(tbdf, 1, paste0, collapse="")
   } 
   
   s.dag = simplest.DAG(ancnames, descnames)
+  write.table(apply(as_edgelist(s.dag$best.graph), c(1,2), BinToDec), paste0(expt, "-table.txt", collapse=""), row.names=FALSE, col.names=FALSE, quote=FALSE)
+  write.single.steps(apply(as_edgelist(s.dag$best.graph), c(1,2), BinToDec), L, paste0(expt, "-table-ss.txt", collapse=""))
   if(length(descnames) != 0) {
     spanned = transitions.spanned(s.dag$best.graph, ancnames, descnames)
     if(spanned == TRUE) {
@@ -133,12 +155,25 @@ print(ggarrange(plot.stage.p(expt.out[[2]]$raw.graph) + title.style,
                 labels=c("A", "B", "C")))
 dev.off()
 
-png("fig-tb.png", width=600*sf, height=500*sf, res=72*sf)
-print(plot.stage.p(expt.out[[3]]$best.graph) + title.style)
+png("fig-tb.png", width=1200*sf, height=500*sf, res=72*sf)
+w = plot.weights(expt.out[[3]]$best.graph, 
+                 labels = c("INH", "RIF", "PZA", "EMB", "STR", "AMI", "CAP", 
+                            "MOX", "OFL", "PRO"))
+print(ggarrange(plot.stage.p(expt.out[[3]]$best.graph) + title.style,
+                w$thresh.plot,
+                labels=c("A", "B")))
 dev.off()
 
-png("fig-cancer.png", width=600*sf, height=300*sf, res=72*sf)
-print(plot.stage.p(expt.out[[5]]$best.graph) + title.style)
+png("fig-cancer.png", width=600*sf, height=600*sf, res=72*sf)
+w = plot.weights(expt.out[[5]]$best.graph, 
+                 labels = c("FLT3", "NPM1", "WT1", "DNMT3A", "KRAS", "NRAS", "RUNX1",
+                            "IDH1", "IDH2", "PTPN11", "SRSF2", "ASXL1", "BCOR", "STAG2",
+                            "TP53", "U2AF1", "SF3B1", "TET2", "CSF3R", "JAK2", "GATA2",
+                            "EZH2", "PPM1D", "SETBP1", "KIT", "CBL", "PHF6", "MYC", "ETV6",
+                            "MPL", "SMC3"))
+print(ggarrange(plot.stage.p(expt.out[[5]]$best.graph) + title.style,
+                w$thresh.plot,
+                labels=c("A", "B"), nrow=2))
 dev.off()
 
 png("fig-odna.png", width=1000*sf, height=1000*sf, res=72*sf)
