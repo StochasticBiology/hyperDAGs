@@ -188,3 +188,5 @@ print(ggarrange(plot.stage.p(expt.out[[6]]$best.graph) + title.style,
                 nrow = 2,
                 labels=c("A", "B")))
 dev.off()
+
+tmp = lapply(expt.out, data.properties)
