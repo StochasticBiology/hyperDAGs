@@ -1,6 +1,6 @@
 source("paired-algorithm.R")
 
-# runtime ~4h on modern Mac
+# runtime ~2h on modern Mac
 
 sf = 3
 # if there are multiple python3 installs on the machine, use this to set the required path
@@ -12,7 +12,13 @@ expt.out = list()
 data.properties = function(fit) {
   str = paste0("L = ", str_length(fit$dataset$ancestors[1]),
                "; ntrans = ", nrow(unique(fit$dataset)),
-               "; nuniq = ", length(unique(c(fit$dataset$ancestors, fit$dataset$descendants)))
+               "; ntotal = ", nrow(fit$dataset),
+               "; nuniq = ", length(unique(c(fit$dataset$ancestors, fit$dataset$descendants))),
+               "; S = ", round(1-fit$best.bc/nrow(fit$dataset), digits=2),
+               "; S' = ", round(1-fit$best.bc/nrow(unique(fit$dataset)), digits=2),
+               "; |E| = ", length(E(fit$best.graph)),
+               "; B = ", branching.count(fit$best.graph),
+               "; LS = ", layer.sum(fit$best.graph)
                )
   message(str)
 }
@@ -32,6 +38,7 @@ write.single.steps = function(trans, L, fname) {
   write.table(unique(trans.set[2:nrow(trans.set),]), fname, row.names=FALSE, col.names=FALSE, quote=FALSE)
 }
 
+stereo.index = function()
 # mtDNA case study takes some minutes; ptDNA will take more
 for(expt in c("inline", "TBsimp", "TB", "CGH", "cancer", "mtDNA", "ptDNA")) {
   expt.index = expt.index + 1
