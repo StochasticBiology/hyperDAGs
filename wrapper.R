@@ -38,7 +38,6 @@ write.single.steps = function(trans, L, fname) {
   write.table(unique(trans.set[2:nrow(trans.set),]), fname, row.names=FALSE, col.names=FALSE, quote=FALSE)
 }
 
-stereo.index = function()
 # mtDNA case study takes some minutes; ptDNA will take more
 for(expt in c("inline", "TBsimp", "TB", "CGH", "cancer", "mtDNA", "ptDNA")) {
   expt.index = expt.index + 1
