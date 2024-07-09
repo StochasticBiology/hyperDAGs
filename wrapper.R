@@ -5,9 +5,9 @@ source("paired-algorithm.R")
 # simple illustrative dataset
 ancnames  = c("10000","01000","00000","10010","01011","10110")
 descnames = c("11110","11110","01011","11110","01111","11111")
-# get LBTSD
+# get STSD
 s.dag = simplest.DAG(ancnames, descnames)
-# plot and summarise
+# plot and summarise: A is SSA, B is STSD, numbers are branching counts
 plot.stage.2(s.dag)
 fit.properties(s.dag)
 
