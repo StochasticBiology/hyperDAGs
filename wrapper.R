@@ -1,5 +1,17 @@
 source("paired-algorithm.R")
 
+#### basic example for demonstration
+
+# simple illustrative dataset
+ancnames  = c("10000","01000","00000","10010","01011","10110")
+descnames = c("11110","11110","01011","11110","01111","11111")
+# get LBTSD
+s.dag = simplest.DAG(ancnames, descnames)
+# plot and summarise
+plot.stage.2(s.dag)
+fit.properties(s.dag)
+
+#### real experiments
 # runtime ~2h on modern Mac
 
 sf = 3
@@ -8,35 +20,6 @@ sf = 3
 local.python = "/opt/homebrew/Caskroom/miniconda/base/bin/python3"
 expt.index = 0
 expt.out = list()
-
-data.properties = function(fit) {
-  str = paste0("L = ", str_length(fit$dataset$ancestors[1]),
-               "; ntrans = ", nrow(unique(fit$dataset)),
-               "; ntotal = ", nrow(fit$dataset),
-               "; nuniq = ", length(unique(c(fit$dataset$ancestors, fit$dataset$descendants))),
-               "; S = ", round(1-fit$best.bc/nrow(fit$dataset), digits=2),
-               "; S' = ", round(1-fit$best.bc/nrow(unique(fit$dataset)), digits=2),
-               "; |E| = ", length(E(fit$best.graph)),
-               "; B = ", branching.count(fit$best.graph),
-               "; LS = ", layer.sum(fit$best.graph)
-               )
-  message(str)
-}
-
-write.single.steps = function(trans, L, fname) {
-  trans.set = matrix(ncol=2)
-  for(i in 1:nrow(trans)) {
-    src = DecToBinV(trans[i,1], L)
-    dest = DecToBinV(trans[i,2], L)
-    changes = which(dest-src == 1)
-    curr = src
-    for(j in changes) {
-     trans.set = rbind(trans.set, c(BinToDec(curr), BinToDec(curr)+2**(L-j) ))
-      curr[j] = 1
-    }
-  }
-  write.table(unique(trans.set[2:nrow(trans.set),]), fname, row.names=FALSE, col.names=FALSE, quote=FALSE)
-}
 
 # mtDNA case study takes some minutes; ptDNA will take more
 for(expt in c("inline", "TBsimp", "TB", "CGH", "cancer", "mtDNA", "ptDNA")) {

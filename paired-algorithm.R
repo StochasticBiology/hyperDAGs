@@ -53,6 +53,37 @@ layer.sum = function(g) {
   return(sum(b.outs*count1s))
 }
 
+# summarise a set of properties of a fitted model
+fit.properties = function(fit) {
+  str = paste0("L = ", str_length(fit$dataset$ancestors[1]),
+               "; ntrans = ", nrow(unique(fit$dataset)),
+               "; ntotal = ", nrow(fit$dataset),
+               "; nuniq = ", length(unique(c(fit$dataset$ancestors, fit$dataset$descendants))),
+               "; S = ", round(1-fit$best.bc/nrow(fit$dataset), digits=2),
+               "; S' = ", round(1-fit$best.bc/nrow(unique(fit$dataset)), digits=2),
+               "; |E| = ", length(E(fit$best.graph)),
+               "; B = ", branching.count(fit$best.graph),
+               "; LS = ", layer.sum(fit$best.graph)
+  )
+  message(str)
+}
+
+# write a solution to a file choosing a particular set of single steps for each multistep change (used to compare HyperHMM output)
+write.single.steps = function(trans, L, fname) {
+  trans.set = matrix(ncol=2)
+  for(i in 1:nrow(trans)) {
+    src = DecToBinV(trans[i,1], L)
+    dest = DecToBinV(trans[i,2], L)
+    changes = which(dest-src == 1)
+    curr = src
+    for(j in changes) {
+      trans.set = rbind(trans.set, c(BinToDec(curr), BinToDec(curr)+2**(L-j) ))
+      curr[j] = 1
+    }
+  }
+  write.table(unique(trans.set[2:nrow(trans.set),]), fname, row.names=FALSE, col.names=FALSE, quote=FALSE)
+}
+
 # Define the function f
 matdiff <- function(x, y) {
   return(x-y)  
