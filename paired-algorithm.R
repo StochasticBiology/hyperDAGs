@@ -485,7 +485,7 @@ plot.stage.2 = function(graphs) {
 }
 
 # plot the simplest spanning arborescence and simplest transition-spanning DAG
-plot.stage.p = function(graphD) {
+plot.stage.p = function(graphD, v.labels = data.frame(Species=NA)) {
   # extract graphs from algorithm output and assign layers
   graphD.layers = sapply(V(graphD)$name, str_count, "1")
   L = str_length(V(graphD)$name[1])
@@ -494,19 +494,29 @@ plot.stage.p = function(graphD) {
   label.size = 3
   if(L > 5) {
     label.size = 2
+    V(graphD)$plotname = V(graphD)$name
   }
   if(L > 20) {
     label.size = 1
-    V(graphD)$name = 1:length(V(graphD))
+    V(graphD)$plotname = 1:length(V(graphD))
   }
   
-  return(
-    ggraph(graphD, layout="sugiyama", layers=graphD.layers) + 
+  if(!is.na(v.labels$Species[1])) {
+    V(graphD)$v.label = ""
+    for(i in 1:nrow(v.labels)) {
+      ref = which(V(graphD)$name == v.labels$label[i])
+      V(graphD)$v.label[ref] = v.labels$Species[i]
+    }
+  }
+  g = ggraph(graphD, layout="sugiyama", layers=graphD.layers) + 
       geom_edge_link(color="#CCCCCC") + 
-      geom_node_text(aes(label=name), size=label.size, angle=45, hjust=0) + #, check_overlap = TRUE) + 
+      geom_node_text(aes(label=plotname), size=label.size, angle=45, hjust=0) + #, check_overlap = TRUE) + 
       ggtitle(paste0("B = ", branching.count(graphD), collapse="")) + scale_x_continuous(expand = c(0.1, 0.1)) +
       theme_graph()
-  )
+  if(!is.na(v.labels$Species[1])) {
+    g = g + geom_node_text(aes(label=v.label), size=2, angle=45, hjust=0)  #, check_overlap = TRUE) + 
+  }
+  return(g)
 }
 
 plot.weights = function(graphD, labels=c(""), thresh=5) {

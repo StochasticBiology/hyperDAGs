@@ -182,11 +182,33 @@ print(ggarrange(plot.stage.p(expt.out[[5]]$best.graph) + title.style,
                 labels=c("A", "B"), nrow=2))
 dev.off()
 
+
+mt.orgs = c("homo sapiens", "arabidopsis thaliana", "reclinomonas americana", 
+         "saccharomyces cerevisiae", "plasmodium falciparum", "physcomitrium patens",
+         "triticum aestivum")
+mt.raw = read.csv("mt-barcodes-manual.csv")
+L = ncol(mt.raw)-1
+mt.names = apply(1-mt.raw[,2:(L+1)], 1, paste0, collapse="")
+mt.labs = data.frame()
+for(i in 1:length(mt.orgs)) {
+  mt.labs = rbind(mt.labs, data.frame(Species = mt.orgs[i], label=mt.names[which(mt.raw$Species == mt.orgs[i])]))
+}
+#plot.stage.p(expt.out[[6]]$best.graph, v.labels=mt.labs)
+
+pt.orgs = c("arabidopsis thaliana", "physcomitrium patens", "hydnora visseri", "parasitaxus usta",
+            "polysiphonia elongata", "gracilaria changii", "cladosiphon okamuranus")
+pt.raw = read.csv("pt-barcodes-manual.csv")
+L = ncol(pt.raw)-1
+pt.names = apply(1-pt.raw[,2:(L+1)], 1, paste0, collapse="")
+pt.labs = data.frame()
+for(i in 1:length(pt.orgs)) {
+  pt.labs = rbind(pt.labs, data.frame(Species = pt.orgs[i], label=pt.names[which(pt.raw$Species == pt.orgs[i])]))
+}
+#plot.stage.p(expt.out[[7]]$best.graph, v.labels=pt.labs)
+
 png("fig-odna.png", width=1000*sf, height=1000*sf, res=72*sf)
-print(ggarrange(plot.stage.p(expt.out[[6]]$best.graph) + title.style, 
-                plot.stage.p(expt.out[[7]]$best.graph) + title.style, 
+print(ggarrange(plot.stage.p(expt.out[[6]]$best.graph, v.labels=mt.labs) + title.style, 
+                plot.stage.p(expt.out[[7]]$best.graph, v.labels=pt.labs) + title.style, 
                 nrow = 2,
                 labels=c("A", "B")))
 dev.off()
-
-tmp = lapply(expt.out, data.properties)
