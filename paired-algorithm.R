@@ -47,9 +47,13 @@ branching.count = function(g) {
 # layer sum
 layer.sum = function(g) {
   b = degree(g, mode="out")-1
+  # get the name, and excess branching, of all nodes with excess branching > 0
   b.names = V(g)$name[b > 0]
   b.outs = b[b>0]
+  # count the 1s in each name to get the layer of each node
   count1s = sapply(b.names, str_count, "1")
+  # return summed product of excess branching and layer
+  # i.e. the sum of source layer over all edges that contribute to excess branching
   return(sum(b.outs*count1s))
 }
 
@@ -84,7 +88,7 @@ write.single.steps = function(trans, L, fname) {
   write.table(unique(trans.set[2:nrow(trans.set),]), fname, row.names=FALSE, col.names=FALSE, quote=FALSE)
 }
 
-# Define the function f
+# difference function for use in vectorising calculations
 matdiff <- function(x, y) {
   return(x-y)  
 }
@@ -523,6 +527,7 @@ plot.stage.p = function(graphD, v.labels = data.frame(Species=NA)) {
   
   # decide on label size (heuristic, for clarity)
   label.size = 3
+  V(graphD)$plotname = V(graphD)$name
   if(L > 5) {
     label.size = 2
     V(graphD)$plotname = V(graphD)$name
