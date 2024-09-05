@@ -5,7 +5,7 @@ Given a dataset of binary string observations, can we construct an arborescence 
 
 Given a dataset of *paired* binary string observations, can we construct a DAG with minimal branching that is a subset of the hypercubic digraph, hits all the vertices corresponding to datapoints, and has a path going from ancestor to descendant for each pair? That is what we are trying to find here. 
 
-`paired-observations.R` currently contains Kostas' implementation of the Gutin algorithm and Iain's developments on top of this, attempting to compute this picture and also "simplify" the result in the sense that branch points are shifted down the graph as much as possible. Plot and helper functions also included. `wrapper.R` and the accompanying datafiles provide some scientific case studies, curating input data and wrapping the analysis.
+`paired-observations.R` currently contains Kostas' implementation of the Gutin algorithm and Iain's developments on top of this, attempting to compute this picture and also "simplify" the result in the sense that branch points are shifted down the graph as much as possible. Plot and helper functions also included. `wrapper.R` and the accompanying datafiles provide some scientific case studies, curating input data and wrapping the analysis, as well as casting data in a consistent form and comparing an alternative approach in Python.
 
 Essentials
 ----
