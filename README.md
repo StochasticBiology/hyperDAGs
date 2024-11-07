@@ -5,7 +5,7 @@ Given a dataset of binary string observations, can we construct an arborescence 
 
 Given a dataset of *paired* binary string observations, can we construct a DAG with minimal branching that is a subset of the hypercubic digraph, hits all the vertices corresponding to datapoints, and has a path going from ancestor to descendant for each pair? That is what we are trying to find here. 
 
-`paired-observations.R` currently contains Kostas' implementation of the Gutin algorithm and Iain's developments on top of this, attempting to compute this picture and also "simplify" the result in the sense that branch points are shifted down the graph as much as possible. Plot and helper functions also included. `wrapper.R` and the accompanying datafiles provide some scientific case studies, curating input data and wrapping the analysis, as well as casting data in a consistent form and comparing an alternative approach in Python.
+`paired-observations.R` currently contains Kostas' implementation of the Gutin algorithm and Iain's developments on top of this, attempting to compute this picture and also "simplify" the result in the sense that branch points are shifted down the graph as much as possible. Plot and helper functions also included. `wrapper.R` and the accompanying datafiles provide some scientific case studies, curating input data and wrapping the analysis, as well as casting data in a consistent form and comparing an alternative approach in Python. The repository also contains some datasets for demonstrations (see References).
 
 Essentials
 ----
@@ -37,6 +37,30 @@ Fitted model structure:
 ![image](https://github.com/user-attachments/assets/f5a743cc-84fb-4cb8-a536-5c64e69bf199)
 
 Stages 1 (Gutin's algorithm for union of data); 2 (rewiring to maximise layer sum); 3 (respecting ancestor-descendant relationships) for a simple test case
+
+
+References
+-----
+
+Organelle genome data:
+
+Giannakis, K., Arrowsmith, S.J., Richards, L., Gasparini, S., Chustecki, J.M., Røyrvik, E.C. and Johnston, I.G., 2022. Evolutionary inference across eukaryotes identifies universal features shaping organelle gene retention. Cell Systems, 13(11), pp.874-884.
+
+Tuberculosis data:
+
+Casali, N., Nikolayevskyy, V., Balabanova, Y., Harris, S.R., Ignatyeva, O., Kontsevaya, I., Corander, J., Bryant, J., Parkhill, J., Nejentsev, S. and Horstmann, R.D., 2014. Evolution and transmission of drug-resistant tuberculosis in a Russian population. Nature genetics, 46(3), pp.279-286.
+
+Leukemia data:
+
+Morita, K., Wang, F., Jahn, K., Hu, T., Tanaka, T., Sasaki, Y., Kuipers, J., Loghavi, S., Wang, S. A., Yan, Y., Furudate, K., Matthews, J., Little, L., Gumbs, C., Zhang, J., Song, X., Thompson, E., Patel, K. P., Bueso-Ramos, C. E., … Takahashi, K. (2020). Clonal evolution of acute myeloid leukemia revealed by high-throughput single-cell genomics. Nature Communications, 11(1), 5327. https://doi.org/10.1038/s41467-020-19119-8
+
+and transition curation from:
+
+Luo, X. G., Kuipers, J., & Beerenwinkel, N. (2023). Joint inference of exclusivity patterns and recurrent trajectories from tumor mutation trees. Nature Communications, 14(1), Article 1. https://doi.org/10.1038/s41467-023-39400-w
+
+Ovarian cancer data:
+
+Knutsen, T., Gobu, V., Knaus, R., Padilla‐Nash, H., Augustus, M., Strausberg, R.L., Kirsch, I.R., Sirotkin, K. and Ried, T., 2005. The interactive online SKY/M‐FISH & CGH database and the Entrez cancer chromosomes search database: linkage of chromosomal aberrations with the genome sequence. Genes, Chromosomes and Cancer, 44(1), pp.52-64.
 
 
 
