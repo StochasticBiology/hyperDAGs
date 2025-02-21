@@ -1,5 +1,9 @@
 source("paired-algorithm.R")
 
+library(reshape2)
+library(ggrepel)
+library(ggplotify)
+
 #### basic example for demonstration
 
 # simple illustrative dataset
@@ -222,4 +226,59 @@ print(ggarrange(plot.stage.p(expt.out[[6]]$best.graph, v.labels=mt.labs) + title
                 plot.stage.p(expt.out[[7]]$best.graph, v.labels=pt.labs) + title.style, 
                 nrow = 2,
                 labels=c("A", "B")))
+dev.off()
+
+oDNA.types = c("MT", "PT")
+oDNA.g = list()
+oDNA.g2 = list()
+
+for(oDNA.expt in 1:2) {
+  oDNA = oDNA.types[oDNA.expt]
+  if(oDNA == "MT") {
+    wg = expt.out[[6]]$best.graph
+  } else{
+    wg = expt.out[[7]]$best.graph
+  }
+  these.nodes = ends(wg, E(wg)[1])
+  src = strsplit(these.nodes[1,1], "")[[1]]
+  L = length(src)
+  if(oDNA == "MT") {
+    genes = colnames(mt.raw)[2:(L+1)]
+  } else {
+    genes = colnames(pt.raw)[2:(L+1)]
+  }
+  
+  mat.dep = matrix(0, nrow=L, ncol=L)
+  
+  for(i in 1:length(E(wg))) {
+    these.nodes = ends(wg, E(wg)[i])
+    src = strsplit(these.nodes[1,1], "")[[1]]
+    dest = strsplit(these.nodes[1,2], "")[[1]]
+    changes = which(src != dest)
+    presents = which(src == "1")
+    absents = which(dest == "0")
+    mat.dep[presents, absents] = mat.dep[presents, absents]+1
+  }
+  
+  colnames(mat.dep) = genes
+  rownames(mat.dep) = genes
+  gene.stats = data.frame(gene=genes, cols=colSums(mat.dep), rows=rowSums(mat.dep))
+  
+  oDNA.g[[oDNA.expt]] = ggplot(gene.stats, aes(x=cols, y=rows, label=gene)) + 
+    geom_point() + geom_text_repel(max.overlaps = 30) + scale_x_sqrt() + scale_y_sqrt() + 
+    labs(x="Other losses preceding loss", y="Other losses following loss")
+  
+  oDNA.g2[[oDNA.expt]] = as.ggplot(pheatmap(mat.dep, 
+                                  treeheight_row = 0, treeheight_col = 0, 
+                                  fontsize_row = 6, fontsize_col = 6))
+}
+
+png("oDNA-points.png", width=800*sf, height=400*sf, res=72*sf)
+ggarrange(oDNA.g[[1]] + theme_minimal(), oDNA.g[[2]] + theme_minimal(), 
+          labels=c("A", "B"))
+dev.off()
+
+png("oDNA-heatmaps.png", width=800*sf, height=1200*sf, res=72*sf)
+ggarrange(oDNA.g2[[1]] + theme_void(), oDNA.g2[[2]] + theme_void(), 
+          labels=c("A", "B"), nrow=2, heights=c(1, 2.5))
 dev.off()
