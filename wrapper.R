@@ -17,6 +17,7 @@ fit.properties(s.dag)
 sf = 3
 # if there are multiple python3 installs on the machine, use this to set the required path
 # local.python = "python3"
+run.python = FALSE    # don't run the Python version by default; change to do so
 local.python = "/opt/homebrew/Caskroom/miniconda/base/bin/python3"
 expt.index = 0
 expt.out = list()
@@ -88,6 +89,23 @@ for(expt in c("inline", "TBsimp", "TB", "CGH", "cancer", "mtDNA", "ptDNA")) {
     descnames = apply(tbdf, 1, paste0, collapse="")
   } 
   
+  dset.trans = unique(data.frame(Ancestor=ancnames, Descendant=descnames))
+  states = unique(c(ancnames, descnames))
+  dset.states = data.frame(States=states)
+  
+  if(expt == "TBsimp") {
+    df = 3
+    tb.simp.data =  ggarrange(ggtexttable(dset.states, rows=NULL),
+                              ggarrange(ggtexttable(dset.trans[1:(nrow(dset.trans)/3),], rows=NULL), 
+                                        ggtexttable(dset.trans[(nrow(dset.trans)/3+1):(2*nrow(dset.trans)/3),], rows=NULL),
+                                        ggtexttable(dset.trans[(2*nrow(dset.trans)/3+1):(nrow(dset.trans)),], rows=NULL),
+                                        nrow=1),
+                              nrow = 1, labels=c("A", "B"), widths=c(0.3,1))
+    png(paste0("stage-0-", expt, ".png", collapse=""), width=600*sf, height=480*sf, res=72*sf)
+    print(tb.simp.data)
+    dev.off()
+  }
+  
   s.dag = simplest.DAG(ancnames, descnames)
   write.table(apply(as_edgelist(s.dag$best.graph), c(1,2), BinToDec), paste0(expt, "-table.txt", collapse=""), row.names=FALSE, col.names=FALSE, quote=FALSE)
   write.single.steps(apply(as_edgelist(s.dag$best.graph), c(1,2), BinToDec), L, paste0(expt, "-table-ss.txt", collapse=""))
@@ -108,6 +126,7 @@ for(expt in c("inline", "TBsimp", "TB", "CGH", "cancer", "mtDNA", "ptDNA")) {
   print(plot.stage.2(s.dag))
   dev.off()
   
+  if(run.python) {
   message("Python code:")
   write.table(data.frame(anc=ancnames,desc=descnames), paste0(expt, "-trans-basic.txt", collapse=""), quote = FALSE, sep=" ", row.names=FALSE, col.names=FALSE)
   write.table(data.frame(anc=ancnames,desc=descnames), "_in", quote = FALSE, sep=" ", row.names=FALSE, col.names=FALSE)
@@ -124,45 +143,54 @@ for(expt in c("inline", "TBsimp", "TB", "CGH", "cancer", "mtDNA", "ptDNA")) {
   print(ggarrange(plot.stage.2(s.dag), plot.stage.p(p.g), 
                   nrow=1, widths=c(2,1), labels=c("", "C")))
   dev.off()
+  }
   
   expt.out[[expt.index]] = s.dag
 }
 
+scale.x = scale_x_continuous(expand = expansion(mult = c(0.05, 0.05)))
+scale.y = scale_y_continuous(expand = expansion(mult = c(0, 0.1))) 
 title.style = theme(plot.title = element_text(
   size = 14,     # Change font size
   family = "Arial",
   face = "plain", # Change font face to bold
   hjust = 0.5,   # Center align the title
   vjust = 0 #1.5    # Adjust vertical alignment
-))
+)) 
 
-png("fig-tbsimp.png", width=1000*sf, height=300*sf, res=72*sf)
-print(ggarrange(plot.stage.p(expt.out[[2]]$raw.graph) + title.style, 
-                plot.stage.p(expt.out[[2]]$rewired.graph) + title.style, 
-                plot.stage.p(expt.out[[2]]$best.graph) + title.style, 
+png("fig-tbsimp.png", width=850*sf, height=700*sf, res=72*sf)
+print(ggarrange(
+  tb.simp.data, 
+  ggarrange(plot.stage.p(expt.out[[2]]$raw.graph) + scale.y + title.style, 
+                plot.stage.p(expt.out[[2]]$rewired.graph) + scale.y + title.style, 
+                plot.stage.p(expt.out[[2]]$best.graph) + scale.y + title.style, 
                 nrow = 1,
-                labels=c("A", "B", "C")))
+                labels=c("C", "D", "E")),
+  nrow=2, heights=c(1,0.66))
+)
 dev.off()
 
 png("fig-tb.png", width=1200*sf, height=500*sf, res=72*sf)
 w = plot.weights(expt.out[[3]]$best.graph, 
                  labels = c("INH", "RIF", "PZA", "EMB", "STR", "AMI", "CAP", 
                             "MOX", "OFL", "PRO"))
-print(ggarrange(plot.stage.p(expt.out[[3]]$best.graph) + title.style,
+print(ggarrange(plot.stage.p(expt.out[[3]]$best.graph) + scale.y + title.style,
                 w$thresh.plot,
-                labels=c("A", "B")))
+                labels=c("C", "D")))
 dev.off()
 
-png("fig-cancer.png", width=600*sf, height=600*sf, res=72*sf)
+png("fig-cancer.png", width=1000*sf, height=500*sf, res=72*sf)
 w = plot.weights(expt.out[[5]]$best.graph, 
                  labels = c("FLT3", "NPM1", "WT1", "DNMT3A", "KRAS", "NRAS", "RUNX1",
                             "IDH1", "IDH2", "PTPN11", "SRSF2", "ASXL1", "BCOR", "STAG2",
                             "TP53", "U2AF1", "SF3B1", "TET2", "CSF3R", "JAK2", "GATA2",
                             "EZH2", "PPM1D", "SETBP1", "KIT", "CBL", "PHF6", "MYC", "ETV6",
                             "MPL", "SMC3"))
-print(ggarrange(plot.stage.p(expt.out[[5]]$best.graph) + title.style,
-                w$thresh.plot,
-                labels=c("A", "B"), nrow=2))
+print(ggarrange(                 plot.stage.p(expt.out[[5]]$best.graph) + coord_flip() + scale.y + scale_y_reverse() + title.style+theme(plot.margin = margin(t = 1, r = 1, b = 1, l = 1)),
+                                 w$thresh.plot + scale_y_reverse() + coord_flip()+theme(plot.margin = margin(t = 1, r = 1, b = 1, l = 1)),
+                                 w$thresh.plot+coord_flip() + scale_y_reverse() + theme(plot.margin = margin(t = 1, r = 1, b = 1, l = 1)),
+                                 nrow=1, labels = c("A", "B", "C"))
+)
 dev.off()
 
 
