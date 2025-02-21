@@ -228,24 +228,32 @@ print(ggarrange(plot.stage.p(expt.out[[6]]$best.graph, v.labels=mt.labs) + title
                 labels=c("A", "B")))
 dev.off()
 
-oDNA.types = c("MT", "PT")
+oDNA.types = c("MT", "PT", "AML")
 oDNA.g = list()
 oDNA.g2 = list()
 
-for(oDNA.expt in 1:2) {
+for(oDNA.expt in 1:3) {
   oDNA = oDNA.types[oDNA.expt]
   if(oDNA == "MT") {
     wg = expt.out[[6]]$best.graph
-  } else{
+  } else if(oDNA == "PT") {
     wg = expt.out[[7]]$best.graph
+  } else if(oDNA == "AML") {
+    wg = expt.out[[5]]$best.graph
   }
   these.nodes = ends(wg, E(wg)[1])
   src = strsplit(these.nodes[1,1], "")[[1]]
   L = length(src)
   if(oDNA == "MT") {
     genes = colnames(mt.raw)[2:(L+1)]
-  } else {
+  } else if(oDNA == "PT") {
     genes = colnames(pt.raw)[2:(L+1)]
+  } else if(oDNA == "AML") {
+    genes = c("FLT3", "NPM1", "WT1", "DNMT3A", "KRAS", "NRAS", "RUNX1",
+                       "IDH1", "IDH2", "PTPN11", "SRSF2", "ASXL1", "BCOR", "STAG2",
+                       "TP53", "U2AF1", "SF3B1", "TET2", "CSF3R", "JAK2", "GATA2",
+                       "EZH2", "PPM1D", "SETBP1", "KIT", "CBL", "PHF6", "MYC", "ETV6",
+                       "MPL", "SMC3")
   }
   
   mat.dep = matrix(0, nrow=L, ncol=L)
@@ -281,4 +289,9 @@ dev.off()
 png("oDNA-heatmaps.png", width=800*sf, height=1200*sf, res=72*sf)
 ggarrange(oDNA.g2[[1]] + theme_void(), oDNA.g2[[2]] + theme_void(), 
           labels=c("A", "B"), nrow=2, heights=c(1, 2.5))
+dev.off()
+
+png("AML-points.png", width=400*sf, height=300*sf, res=72*sf)
+oDNA.g[[3]] + theme_minimal() + 
+  labs(x = "Other gains preceding gain", y = "Other gains following gain")
 dev.off()
