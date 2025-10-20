@@ -254,9 +254,11 @@ simplest_arborescence = function(ancnames, descnames=NULL) {
 
   # add the corresponding entries to the skeleton (ji for condition 2, ij for condition 3)
   skeleton = rbind(skeleton, data.frame(Anc=names[unique.2[,2]],
-                                        Desc=names[unique.2[,1]]))
+                                        Desc=names[unique.2[,1]],
+                                        stringsAsFactors=FALSE))
   skeleton = rbind(skeleton, data.frame(Anc=names[unique.3[,1]],
-                                        Desc=names[unique.3[,2]]))
+                                        Desc=names[unique.3[,2]],
+                                        stringsAsFactors=FALSE)))
 
   # just to make sure we don't have self-loops
   skeleton=skeleton[which(skeleton$Anc != skeleton$Desc),]
