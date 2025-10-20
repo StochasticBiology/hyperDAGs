@@ -1,5 +1,5 @@
 # hyperDAGs
-DAG skeletons on hypercubic transition networks
+An R library and associated case study code for analysing DAG skeletons on hypercubic transition networks
 
 For now, install with `remotes::install_github("StochasticBiology/hyperDAGs")`
 
