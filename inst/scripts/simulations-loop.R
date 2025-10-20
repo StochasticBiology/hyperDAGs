@@ -16,21 +16,26 @@ binary_strings_with_k_ones <- function(n, k) {
   })
 }
 
-L = 10
-dyn.set = c("linear", "random", "max.spread")
-tree.size = 128
+random_binary_strings <- function(n, nstr) {
+  rm = matrix(round(runif(n*nstr)), ncol=n)
+  return(apply(rm, 1, paste0, collapse=""))
+}
 
+L = 10
+dyn.set = c("linear", "random", "mixed", "max.spread", "spread")
+tree.size = 128
+#dyn.set = "mixed"
 birth.rate = 1
 death.rate = 0.5
 
 solns = list()
 ancnames = descnames = list()
-fits = data.frame()
+fits.raw = data.frame()
 
-for(L in c(3, 5, 7, 9)) {
+for(L in c(3, 5, 7, 9, 20)) {
   for(tree.size in c(32, 64, 128)) {
     for(dynamics in dyn.set) {
-      if(dynamics == "random") {
+      if(dynamics == "random" | dynamics == "spread") {
         n.seed = 5
       } else {
         n.seed = 1
@@ -42,9 +47,12 @@ for(L in c(3, 5, 7, 9)) {
         ancnames[[expt.label]] = c()
         descnames[[expt.label]] = c()
 
-        if(dynamics == "max.spread") {
+        if(dynamics == "spread" | dynamics == "max.spread") {
           descnames[[expt.label]] = rep(binary_strings_with_k_ones(L, floor(L/2)), length.out = tree.size-1)
           ancnames[[expt.label]] = rep(binary_strings_with_k_ones(L, 0), length.out = tree.size-1)
+          if(dynamics == "spread") {
+            descnames[[expt.label]][1:floor((tree.size-1)/2)] = random_binary_strings(L, floor((tree.size-1)/2))
+          }
         } else {
           # accumulation rate for features (and loss rate, for reversible setup)
           accumulation.rate = 1
@@ -84,6 +92,13 @@ for(L in c(3, 5, 7, 9)) {
                   if(dynamics == "random") {
                     if(runif(1) < accumulation.rate*this.branch.length) { x[[this.child]][sample(ref, 1)] = 1}
                   }
+                  if(dynamics == "mixed") {
+                    if(runif(1) < 0.1) {
+                      if(runif(1) < accumulation.rate*this.branch.length) { x[[this.child]][sample(ref, 1)] = 1}
+                    } else {
+                      if(runif(1) < accumulation.rate*this.branch.length) { x[[this.child]][ref[1]] = 1 }
+                    }
+                  }
                 }
 
                 anc.str = paste0(x[[i]], collapse="")
@@ -100,18 +115,47 @@ for(L in c(3, 5, 7, 9)) {
           }
         }
         solns[[expt.label]] = simplest_DAG(ancnames[[expt.label]], descnames[[expt.label]])
-        fits = rbind(fits, cbind(data.frame(label=expt.label),
+        fits.raw = rbind(fits.raw, cbind(data.frame(label=expt.label),
                                  fit_properties(solns[[expt.label]], verbose=FALSE)))
       }
     }
   }
 }
 
-sol = simplest_DAG(ancnames[["linear"]], descnames[["linear"]])
-plot_stage_p(sol$best.graph)
-sol = simplest_DAG(ancnames[["random"]], descnames[["random"]])
-plot_stage_p(sol$best.graph)
-sol = simplest_DAG(ancnames[["max.spread"]], descnames[["max.spread"]])
-plot_stage_p(sol$best.graph)
-fit_properties(sol)
-ggarrange(plot_stage_1(solns[[1]]), plot_stage_1(solns[[2]]), nrow=2)
+save(fits, file="fitted-solns.Rdata")
+fits = fits.raw
+fits$type = "random"
+fits$type[grep("linear", fits$label)] = "linear"
+fits$type[grep("spread", fits$label)] = "spread"
+fits$type[grep("mixed", fits$label)] = "mixed"
+fits$type[grep("max.spread", fits$label)] = "max.spread"
+fits$tree.size =as.numeric(sapply(strsplit(fits$label, "\\."), `[`, 2))
+ggarrange(
+  ggplot(fits, aes(x=type, y=S, color=factor(L), shape=factor(tree.size))) + geom_point(position = position_dodge(width = 0.5)),
+  ggplot(fits, aes(x=type, y=Sprime, color=factor(L), shape=factor(tree.size))) + geom_point(position = position_dodge(width = 0.5)),
+  ggplot(fits, aes(x=type, y=Sstar, color=factor(L), shape=factor(tree.size))) + geom_point(position = position_dodge(width = 0.5)),
+  nrow=3)
+
+ggplot(fits, aes(x=type, y=Sprime, color=factor(L), shape=factor(tree.size))) + geom_point(position = position_dodge(width = 0.5)) +
+  theme_minimal() +
+  theme(legend.position="bottom") +
+  labs(x = "Dynamics", y = "S'", color = "L:", shape = "n:")
+
+margin.shift = 25
+ggarrange(
+  plot_stage_gen(solns[["5.128.mixed.1"]]$raw.graph, label.size = 4) +
+    coord_cartesian(clip = "off") + theme(plot.margin = margin(margin.shift, margin.shift, margin.shift, margin.shift)),
+  plot_stage_gen(solns[["5.128.mixed.1"]]$rewired.graph, label.size = 4) +
+    coord_cartesian(clip = "off") + theme(plot.margin = margin(margin.shift, margin.shift, margin.shift, margin.shift)),
+  plot_stage_gen(solns[["5.128.mixed.1"]]$best.graph, label.size = 4) +
+  coord_cartesian(clip = "off") + theme(plot.margin = margin(margin.shift, margin.shift, margin.shift, margin.shift))
+)
+
+ggarrange(
+plot_stage_gen(solns[["20.128.mixed.1"]]$raw.graph,
+               label.size = 4, label.style = "labels"),
+plot_stage_gen(solns[["20.128.mixed.1"]]$rewired.graph,
+               label.size = 4, label.style = "labels"),
+plot_stage_gen(solns[["20.128.mixed.1"]]$best.graph,
+               label.size = 4, label.style = "labels"))
+
