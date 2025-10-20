@@ -86,35 +86,35 @@ layer_sum = function(g) {
 #' Summarise a set of properties of a fitted HyperDAGs model
 #'
 #' @param fit model structure to analyse
-#' @param verbose Boolean, whether to output summary as a message
+#' @param verbose Boolean, whether to output summary as a message (default false)
 #' @return data frame of summary properties
 #' @examples
 #' sol = simplest_DAG(c("000", "010", "100"), c("110", "110", "101"))
 #' fit_properties(sol)
 #' @export
-fit_properties = function(fit, verbose=TRUE) {
+fit_properties = function(fit, verbose=FALSE) {
   thisL = stringr::str_length(fit$dataset$ancestors[1])
   df = data.frame(L = stringr::str_length(fit$dataset$ancestors[1]),
                   ntrans = stringr::str_length(fit$dataset$ancestors[1]),
                   ntotal = nrow(fit$dataset),
                   nuniq = length(unique(c(fit$dataset$ancestors, fit$dataset$descendants))),
-                  S = round(1-fit$best.bc/nrow(fit$dataset), digits=2),
-                  Sprime = round(1-fit$best.bc/nrow(unique(fit$dataset)), digits=2),
-                  Sstar = round(1-fit$best.bc/choose(thisL, floor(thisL/2)), digits=2),
+                  S = round(1-fit$best.bc/(nrow(fit$dataset)-1), digits=2),
+                  Sprime = round(1-fit$best.bc/(nrow(unique(fit$dataset))-1), digits=2),
+                  Sstar = round(1-fit$best.bc/(choose(thisL, floor(thisL/2))-1), digits=2),
                   modE = length(igraph::E(fit$best.graph)),
                   B = branching_count(fit$best.graph),
                   LS = layer_sum(fit$best.graph))
   if(verbose == TRUE) {
-  str = paste0("L = ", stringr::str_length(fit$dataset$ancestors[1]),
-               "; ntrans = ", nrow(unique(fit$dataset)),
-               "; ntotal = ", nrow(fit$dataset),
-               "; nuniq = ", length(unique(c(fit$dataset$ancestors, fit$dataset$descendants))),
-               "; S = ", round(1-fit$best.bc/nrow(fit$dataset), digits=2),
-               "; S' = ", round(1-fit$best.bc/nrow(unique(fit$dataset)), digits=2),
-               "; S* = ", round(1-fit$best.bc/choose(thisL, floor(thisL/2)), digits=2),
-               "; |E| = ", length(igraph::E(fit$best.graph)),
-               "; B = ", branching_count(fit$best.graph),
-               "; LS = ", layer_sum(fit$best.graph)
+  str = paste0("L = ", df$L,
+               "; ntrans = ", df$ntrans,
+               "; ntotal = ", df$ntotal,
+               "; nuniq = ", df$nuniq,
+               "; S = ", df$S,
+               "; S' = ", df$Sprime,
+               "; S* = ", df$Sstar,
+               "; |E| = ", df$modE,
+               "; B = ", df$B,
+               "; LS = ", df$LS
   )
   message(str)
   }
@@ -484,19 +484,19 @@ simplest_DAG = function(ancnames, descnames) {
 
 #' Plot the unrewired arboresence (output from Gutin algorithm) and the rewired version increasing layer sum
 #'
-#' @param graphs list output of model fit
+#' @param soln list output of model fit
 #' @return ggarrange object containing plots
 #' @examples
 #' sol = simplest_DAG(c("000", "010", "100"), c("110", "110", "101"))
 #' plot_stage_1(sol)
 #' @export
-plot_stage_1 = function(graphs) {
+plot_stage_1 = function(soln) {
   # extract graphs from algorithm output and assign nodes to layers
-  graphB = graphs$raw.graph
-  new.graphB = graphs$rewired.graph
+  graphB = soln$raw.graph
+  new.graphB = soln$rewired.graph
   graphB.layers = sapply(igraph::V(graphB)$name, stringr::str_count, "1")
   new.graphB.layers = sapply(igraph::V(new.graphB)$name, stringr::str_count, "1")
-  L = graphs$len
+  L = soln$len
 
   # decide on label size (heuristic, for clarity)
   label.size = 3
@@ -557,13 +557,13 @@ plot_stage_2 = function(graphs) {
     ggpubr::ggarrange( ggraph::ggraph(graphB, layout="sugiyama", layers=graphB.layers) +
                          ggraph::geom_edge_link(color="#CCCCCC") +
                          ggraph::geom_node_text(ggplot2::aes(label=name), size=label.size, angle=45, hjust=0) +
-                         ggplot2::ggtitle(branching_count(graphB)) +
+                         ggplot2::labs(caption = paste0("B = ", branching_count(graphB), collapse="")) +
                          ggplot2::scale_x_continuous(expand = c(0.1, 0.1)) +
                          ggplot2::theme_void(), #ggraph::theme_graph(),
                        ggraph::ggraph(graphD, layout="sugiyama", layers=graphD.layers) +
                          ggraph::geom_edge_link(color="#CCCCCC") +
                          ggraph::geom_node_text(ggplot2::aes(label=name), size=label.size, angle=45, hjust=0) + #, check_overlap = TRUE) +
-                         ggplot2::ggtitle(branching_count(graphD)) +
+                         ggplot2::labs(caption = paste0("B = ", branching_count(graphD), collapse="")) +
                          ggplot2::scale_x_continuous(expand = c(0.1, 0.1)) +
                          ggplot2::theme_void(), #ggraph::theme_graph(),
 
@@ -608,8 +608,72 @@ plot_stage_p = function(graphD, v.labels = data.frame(Species=NA)) {
   g = ggraph::ggraph(graphD, layout="sugiyama", layers=graphD.layers) +
     ggraph::geom_edge_link(color="#CCCCCC") +
     ggraph::geom_node_text(ggplot2::aes(label=plotname), size=label.size, angle=45, hjust=0) +
-    ggplot2::ggtitle(paste0("B = ", branching_count(graphD), collapse="")) +
+    ggplot2::labs(caption = paste0("B = ", branching_count(graphD), collapse="")) +
     ggplot2::scale_x_continuous(expand = c(0.1, 0.1)) +
+    ggplot2::theme_void() #ggraph::theme_graph()
+  if(!is.na(v.labels$Species[1])) {
+    g = g +
+      ggraph::geom_node_text(ggplot2::aes(label=v.label), size=2, angle=45, hjust=0)  #, check_overlap = TRUE) +
+  }
+  return(g)
+}
+
+#' Plot a solution graph with control over styling
+#'
+#' @param graphD graph to plot
+#' @param v.labels data frame of vertex labels (optional)
+#' @param label.size numeric node label size (default chooses according to length)
+#' @param label.style character node plot style ("full" binary strings or "labels" individual codes for nodes, default chooses according to length)
+#' @return ggarrange object containing plots
+#' @examples
+#' sol = simplest_DAG(c("000", "010", "100"), c("110", "110", "101"))
+#' plot_stage_gen(sol$best.graph)
+#' @export
+plot_stage_gen = function(graphD,
+                          v.labels = data.frame(Species=NA),
+                          label.size = 0,
+                          label.style = 0) {
+  # extract graphs from algorithm output and assign layers
+  graphD.layers = sapply(igraph::V(graphD)$name, stringr::str_count, "1")
+  L = stringr::str_length(igraph::V(graphD)$name[1])
+
+  # decide on label size (heuristic, for clarity)
+  igraph::V(graphD)$plotname = igraph::V(graphD)$name
+  if(L > 5) {
+    if(label.size == 0) {
+      label.size = 2
+    }
+    if(label.style == 0) {
+    igraph::V(graphD)$plotname = igraph::V(graphD)$name
+    }
+  }
+  if(L > 20) {
+    if(label.size == 0) {
+    label.size = 1
+    }
+    if(label.style == 0) {
+    igraph::V(graphD)$plotname = 1:length(igraph::V(graphD))
+    }
+  }
+
+  if(label.style == "full") {
+    igraph::V(graphD)$plotname = igraph::V(graphD)$name
+  }
+  if(label.style == "labels") {
+    igraph::V(graphD)$plotname = 1:length(igraph::V(graphD))
+  }
+  if(!is.na(v.labels$Species[1])) {
+    igraph::V(graphD)$v.label = ""
+    for(i in 1:nrow(v.labels)) {
+      ref = which(igraph::V(graphD)$name == v.labels$label[i])
+      igraph::V(graphD)$v.label[ref] = v.labels$Species[i]
+    }
+  }
+  g = ggraph::ggraph(graphD, layout="sugiyama", layers=graphD.layers) +
+    ggraph::geom_edge_link(color="#CCCCCC") +
+    ggraph::geom_node_text(ggplot2::aes(label=plotname), size=label.size, angle=45, hjust=0) +
+   # ggplot2::ggtitle(paste0("B = ", branching_count(graphD), collapse="")) +
+  #  ggplot2::scale_x_continuous(expand = c(0.1, 0.1)) +
     ggplot2::theme_void() #ggraph::theme_graph()
   if(!is.na(v.labels$Species[1])) {
     g = g +
