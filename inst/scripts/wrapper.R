@@ -3,6 +3,8 @@ library(reshape2)
 library(ggrepel)
 library(ggplotify)
 library(ggpubr)
+library(igraph)
+library(pheatmap)
 
 # functions for reading data and plotting
 srcfile <- system.file("scripts", "get_data.R", package = "hyperdags")
@@ -74,6 +76,8 @@ for(expt in c("inline", "TBsimp", "TB", "CGH", "cancer", "mtDNA", "ptDNA")) {
   expt.out[[expt]] = s.dag
 }
 
+save(expt.out, file="expt-out.Rdata")
+
 ### the following section produces graphical output for the article
 
 # some options for graphical styling in output
@@ -142,7 +146,8 @@ dev.off()
 mt.orgs = c("homo sapiens", "arabidopsis thaliana", "reclinomonas americana",
          "saccharomyces cerevisiae", "plasmodium falciparum", "physcomitrium patens",
          "triticum aestivum")
-mt.raw = read.csv("mt-barcodes-manual.csv")
+datafile <- system.file("extdata", "mt-barcodes-manual.csv", package = "hyperdags")
+mt.raw = read.csv(datafile)
 L = ncol(mt.raw)-1
 mt.names = apply(1-mt.raw[,2:(L+1)], 1, paste0, collapse="")
 mt.labs = data.frame()
@@ -153,7 +158,8 @@ for(i in 1:length(mt.orgs)) {
 # same for plastids
 pt.orgs = c("arabidopsis thaliana", "physcomitrium patens", "hydnora visseri", "parasitaxus usta",
             "polysiphonia elongata", "gracilaria changii", "cladosiphon okamuranus")
-pt.raw = read.csv("pt-barcodes-manual.csv")
+datafile <- system.file("extdata", "pt-barcodes-manual.csv", package = "hyperdags")
+pt.raw = read.csv(datafile)
 L = ncol(pt.raw)-1
 pt.names = apply(1-pt.raw[,2:(L+1)], 1, paste0, collapse="")
 pt.labs = data.frame()
