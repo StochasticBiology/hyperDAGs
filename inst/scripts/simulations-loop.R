@@ -122,7 +122,6 @@ for(L in c(3, 5, 7, 9, 20)) {
   }
 }
 
-save(fits, file="fitted-solns.Rdata")
 fits = fits.raw
 fits$type = "random"
 fits$type[grep("linear", fits$label)] = "linear"
@@ -130,16 +129,24 @@ fits$type[grep("spread", fits$label)] = "spread"
 fits$type[grep("mixed", fits$label)] = "mixed"
 fits$type[grep("max.spread", fits$label)] = "max.spread"
 fits$tree.size =as.numeric(sapply(strsplit(fits$label, "\\."), `[`, 2))
+
+save(fits, file="fitted-solns.Rdata")
+
 ggarrange(
   ggplot(fits, aes(x=type, y=S, color=factor(L), shape=factor(tree.size))) + geom_point(position = position_dodge(width = 0.5)),
   ggplot(fits, aes(x=type, y=Sprime, color=factor(L), shape=factor(tree.size))) + geom_point(position = position_dodge(width = 0.5)),
   ggplot(fits, aes(x=type, y=Sstar, color=factor(L), shape=factor(tree.size))) + geom_point(position = position_dodge(width = 0.5)),
   nrow=3)
 
-ggplot(fits, aes(x=type, y=Sprime, color=factor(L), shape=factor(tree.size))) + geom_point(position = position_dodge(width = 0.5)) +
+sprime.plot = ggplot(fits, aes(x=type, y=Sprime, color=factor(L), shape=factor(tree.size))) + geom_point(position = position_dodge(width = 0.5)) +
   theme_minimal() +
   theme(legend.position="bottom") +
   labs(x = "Dynamics", y = "S'", color = "L:", shape = "n:")
+
+sf = 3
+png("sprime-plot.png", width=400*sf, height=200*sf, res=72*sf)
+print(sprime.plot)
+dev.off()
 
 margin.shift = 25
 ggarrange(
