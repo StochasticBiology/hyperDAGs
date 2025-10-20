@@ -21,6 +21,26 @@ random_binary_strings <- function(n, nstr) {
   return(apply(rm, 1, paste0, collapse=""))
 }
 
+star_tree = function(n) {
+  # optional: tip labels
+tip.labels <- paste0("t", 1:n)
+
+# create a star tree
+star.tree <- ape::stree(n = n, type = "star")
+star.tree$tip.label <- tip.labels
+return(star.tree)
+}
+
+plot_tree_data = function(tree, tip.data) {
+  data.m = do.call(rbind, tip.data)[1:length(my.tree$tip.label),]
+  rownames(data.m) = my.tree$tip.label
+  g.core = ggtree::ggtree(my.tree)
+  this.plot = ggtree::gheatmap(g.core, as.data.frame(data.m), low="white", high="#AAAAAA") +
+    theme(legend.position="none")
+
+  return(this.plot)
+}
+
 L = 10
 dyn.set = c("linear", "random", "mixed", "max.spread", "spread")
 tree.size = 128
@@ -31,6 +51,7 @@ death.rate = 0.5
 solns = list()
 ancnames = descnames = list()
 fits.raw = data.frame()
+data.plots = list()
 
 for(L in c(3, 5, 7, 9, 20)) {
   for(tree.size in c(32, 64, 128)) {
@@ -48,11 +69,15 @@ for(L in c(3, 5, 7, 9, 20)) {
         descnames[[expt.label]] = c()
 
         if(dynamics == "spread" | dynamics == "max.spread") {
+          my.tree = star_tree(tree.size)
           descnames[[expt.label]] = rep(binary_strings_with_k_ones(L, floor(L/2)), length.out = tree.size-1)
           ancnames[[expt.label]] = rep(binary_strings_with_k_ones(L, 0), length.out = tree.size-1)
           if(dynamics == "spread") {
             descnames[[expt.label]][1:floor((tree.size-1)/2)] = random_binary_strings(L, floor((tree.size-1)/2))
           }
+          x = strsplit(descnames[[expt.label]], split="")
+          x[[length(x)+1]] = strsplit(ancnames[[expt.label]][1], split="")[[1]]
+          x = lapply(x, as.numeric)
         } else {
           # accumulation rate for features (and loss rate, for reversible setup)
           accumulation.rate = 1
@@ -117,10 +142,24 @@ for(L in c(3, 5, 7, 9, 20)) {
         solns[[expt.label]] = simplest_DAG(ancnames[[expt.label]], descnames[[expt.label]])
         fits.raw = rbind(fits.raw, cbind(data.frame(label=expt.label),
                                  fit_properties(solns[[expt.label]], verbose=FALSE)))
+        if(seed == 1) {
+          data.plots[[expt.label]] = plot_tree_data(my.tree, x)
+        }
       }
     }
   }
 }
+
+ggarrange(plotlist = data.plots)
+soln.plots = list()
+for(name in names(data.plots)) {
+  this.soln = solns[[name]]
+  soln.plots[[name]] = plot_stage_gen(this.soln$best.graph)
+}
+ggarrange(
+  ggarrange(plotlist = data.plots, nrow=1),
+  ggarrange(plotlist = soln.plots, nrow=1), nrow = 2
+)
 
 fits = fits.raw
 fits$type = "random"
@@ -130,7 +169,8 @@ fits$type[grep("mixed", fits$label)] = "mixed"
 fits$type[grep("max.spread", fits$label)] = "max.spread"
 fits$tree.size =as.numeric(sapply(strsplit(fits$label, "\\."), `[`, 2))
 
-save(fits, file="fitted-solns.Rdata")
+#save(fits, file="fitted-solns.Rdata")
+#load("fitted-solns.Rdata")
 
 ggarrange(
   ggplot(fits, aes(x=type, y=S, color=factor(L), shape=factor(tree.size))) + geom_point(position = position_dodge(width = 0.5)),
