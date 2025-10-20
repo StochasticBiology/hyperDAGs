@@ -4,10 +4,10 @@
 \alias{plot_stage_1}
 \title{Plot the unrewired arboresence (output from Gutin algorithm) and the rewired version increasing layer sum}
 \usage{
-plot_stage_1(graphs)
+plot_stage_1(soln)
 }
 \arguments{
-\item{graphs}{list output of model fit}
+\item{soln}{list output of model fit}
 }
 \value{
 ggarrange object containing plots
