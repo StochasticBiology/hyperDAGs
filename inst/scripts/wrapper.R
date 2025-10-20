@@ -76,7 +76,8 @@ for(expt in c("inline", "TBsimp", "TB", "CGH", "cancer", "mtDNA", "ptDNA")) {
   expt.out[[expt]] = s.dag
 }
 
-save(expt.out, file="expt-out.Rdata")
+#save(expt.out, file="expt-out.Rdata")
+#load("expt-out.Rdata")
 
 ### the following section produces graphical output for the article
 
@@ -93,12 +94,12 @@ title.style = theme(plot.title = element_text(
 
 
   tb.simp.data =  ggarrange(ggtexttable(tbsimp.dset.states, rows=NULL),
-                            ggarrange(ggtexttable(dset.trans[1:(nrow(tbsimp.dset.trans)/3),], rows=NULL),
-                                      ggtexttable(dset.trans[(nrow(tbsimp.dset.trans)/3+1):(2*nrow(tbsimp.dset.trans)/3),], rows=NULL),
-                                      ggtexttable(dset.trans[(2*nrow(tbsimp.dset.trans)/3+1):(nrow(tbsimp.dset.trans)),], rows=NULL),
+                            ggarrange(ggtexttable(tbsimp.dset.trans[1:(nrow(tbsimp.dset.trans)/3),], rows=NULL),
+                                      ggtexttable(tbsimp.dset.trans[(nrow(tbsimp.dset.trans)/3+1):(2*nrow(tbsimp.dset.trans)/3),], rows=NULL),
+                                      ggtexttable(tbsimp.dset.trans[(2*nrow(tbsimp.dset.trans)/3+1):(nrow(tbsimp.dset.trans)),], rows=NULL),
                                       nrow=1),
                             nrow = 1, labels=c("A", "B"), widths=c(0.3,1))
-  png(paste0("stage-0-", expt, ".png", collapse=""), width=600*sf, height=480*sf, res=72*sf)
+  png("table-tbsimp.png", width=600*sf, height=480*sf, res=72*sf)
   print(tb.simp.data)
   dev.off()
 
