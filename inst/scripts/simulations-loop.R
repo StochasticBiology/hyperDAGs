@@ -21,6 +21,20 @@ random_binary_strings <- function(n, nstr) {
   return(apply(rm, 1, paste0, collapse=""))
 }
 
+bilinear_binary_strings <- function(n, nstr) {
+  rm = matrix(0, nrow=nstr, ncol=n)
+  one.count = 0
+  for(i in 0:(floor(nstr/2) - 1)) {
+    for(j in 0:one.count) {
+      rm[2*i+1,j+1] = 1
+      rm[2*i+2,n-j] = 1
+    }
+    one.count = one.count+1
+    if(one.count >= n) { one.count = 0 }
+  }
+  return(apply(rm, 1, paste0, collapse=""))
+}
+
 star_tree = function(n) {
   # optional: tip labels
 tip.labels <- paste0("t", 1:n)
@@ -31,25 +45,27 @@ star.tree$tip.label <- tip.labels
 return(star.tree)
 }
 
-plot_tree_data = function(tree, tip.data) {
+plot_tree_data = function(my.tree, tip.data) {
   data.m = do.call(rbind, tip.data)[1:length(my.tree$tip.label),]
   rownames(data.m) = my.tree$tip.label
+  colnames(data.m) = 1:ncol(data.m)
   g.core = ggtree::ggtree(my.tree)
-  this.plot = ggtree::gheatmap(g.core, as.data.frame(data.m), low="white", high="#AAAAAA") +
+  this.plot = ggtree::gheatmap(g.core, as.data.frame(data.m), low="white", high="#AAAAAA", colnames=FALSE) +
     theme(legend.position="none")
 
   return(this.plot)
 }
 
 L = 10
-dyn.set = c("linear", "random", "mixed", "max.spread", "spread")
+dyn.set = c("linear", "random", "mixed", "bilinear", "max.spread", "spread")
 tree.size = 128
-#dyn.set = "mixed"
+#dyn.set = "bilinear"
 birth.rate = 1
 death.rate = 0.5
 
 solns = list()
 ancnames = descnames = list()
+x.set = tree.set = list()
 fits.raw = data.frame()
 data.plots = list()
 
@@ -68,12 +84,15 @@ for(L in c(3, 5, 7, 9, 20)) {
         ancnames[[expt.label]] = c()
         descnames[[expt.label]] = c()
 
-        if(dynamics == "spread" | dynamics == "max.spread") {
+        if(dynamics == "spread" | dynamics == "max.spread" | dynamics == "bilinear") {
           my.tree = star_tree(tree.size)
           descnames[[expt.label]] = rep(binary_strings_with_k_ones(L, floor(L/2)), length.out = tree.size-1)
           ancnames[[expt.label]] = rep(binary_strings_with_k_ones(L, 0), length.out = tree.size-1)
           if(dynamics == "spread") {
             descnames[[expt.label]][1:floor((tree.size-1)/2)] = random_binary_strings(L, floor((tree.size-1)/2))
+          }
+          if(dynamics == "bilinear") {
+            descnames[[expt.label]] = bilinear_binary_strings(L, tree.size-1)
           }
           x = strsplit(descnames[[expt.label]], split="")
           x[[length(x)+1]] = strsplit(ancnames[[expt.label]][1], split="")[[1]]
@@ -142,35 +161,91 @@ for(L in c(3, 5, 7, 9, 20)) {
         solns[[expt.label]] = simplest_DAG(ancnames[[expt.label]], descnames[[expt.label]])
         fits.raw = rbind(fits.raw, cbind(data.frame(label=expt.label),
                                  fit_properties(solns[[expt.label]], verbose=FALSE)))
-        if(seed == 1) {
-          data.plots[[expt.label]] = plot_tree_data(my.tree, x)
-        }
+        x.set[[expt.label]] = x
+        tree.set[[expt.label]] = my.tree
       }
     }
   }
 }
 
-ggarrange(plotlist = data.plots)
-soln.plots = list()
-for(name in names(data.plots)) {
+save(fits, file="sims-fits.Rdata")
+save(solns, file="sims-solns.Rdata")
+save(x.set, file="sims-x-set.Rdata")
+save(tree.set, file="sims-tree-set.Rdata")
+
+
+#### pull example for simple demo
+
+name = names(x.set)[grep("5.32.random.1", names(x.set))]
+this.x = x.set[[name]]
+this.tree = tree.set[[name]]
+plot.1 = plot_tree_data(this.tree, this.x)
+this.soln = solns[[name]]
+
+this.soln$best.ls = layer_sum(this.soln$best.graph)
+this.soln$Sprime = fit_properties(this.soln)$Sprime
+plot.2 = plot_stage_gen(this.soln$raw.graph,
+                                         label.size = 4) +
+  coord_cartesian(clip = "off") + theme(plot.margin = margin(margin.shift, margin.shift, margin.shift, margin.shift)) +
+  labs(caption = paste0("B = ", this.soln$raw.bc, ", LS = ", this.soln$raw.ls, collapse="")) +
+  theme(plot.caption = element_text(size = 14, hjust = 0.5))
+
+plot.3 = plot_stage_gen(this.soln$rewired.graph,
+                        label.size = 4) +
+  coord_cartesian(clip = "off") + theme(plot.margin = margin(margin.shift, margin.shift, margin.shift, margin.shift)) +
+  labs(caption = paste0("B = ", this.soln$rewired.bc, ", LS = ", this.soln$rewired.ls, collapse="")) +
+  theme(plot.caption = element_text(size = 14, hjust = 0.5))
+
+plot.4 = plot_stage_gen(this.soln$best.graph,
+                        label.size = 4) +
+  coord_cartesian(clip = "off") + theme(plot.margin = margin(margin.shift, margin.shift, margin.shift, margin.shift)) +
+  labs(caption = paste0("B = ", this.soln$best.bc, ", S' = ", this.soln$Sprime, " (LS = ", this.soln$best.ls, ")", collapse="")) +
+  theme(plot.caption = element_text(size = 14, hjust = 0.5))
+
+simple.plot = ggarrange(plot.1, plot.2, plot.3, plot.4,
+          labels=c("A", "B", "C", "D"))
+
+sf = 3
+png("sim-simple-plot.png", width=600*sf, height=400*sf, res=72*sf)
+print(simple.plot)
+dev.off()
+
+#### pull examples for demonstrations of different dynamics
+
+names.demo.plot = names(x.set)[grep("7.32.*1", names(x.set))]
+
+margin.shift = 25
+demo.soln.plots = demo.data.plots = list()
+for(name in names.demo.plot) {
+  this.x = x.set[[name]]
+  this.tree = tree.set[[name]]
+  demo.data.plots[[name]] = plot_tree_data(this.tree, this.x)
   this.soln = solns[[name]]
-  soln.plots[[name]] = plot_stage_gen(this.soln$best.graph)
+  demo.soln.plots[[name]] = plot_stage_gen(this.soln$best.graph,
+                                      label.size = 4) +
+    coord_cartesian(clip = "off") + theme(plot.margin = margin(margin.shift, margin.shift, margin.shift, margin.shift))
 }
-ggarrange(
-  ggarrange(plotlist = data.plots, nrow=1),
-  ggarrange(plotlist = soln.plots, nrow=1), nrow = 2
+
+sim.plot = ggarrange(
+  ggarrange(plotlist = demo.data.plots, nrow=1),
+  ggarrange(plotlist = demo.soln.plots, nrow=1), nrow = 2
 )
+
+png("sim-plot-data.png", width=1300*sf, height=600*sf, res=72*sf)
+print(sim.plot)
+dev.off()
+
+### statistics under different dynamics
 
 fits = fits.raw
 fits$type = "random"
 fits$type[grep("linear", fits$label)] = "linear"
+fits$type[grep("bilinear", fits$label)] = "bilinear"
 fits$type[grep("spread", fits$label)] = "spread"
 fits$type[grep("mixed", fits$label)] = "mixed"
 fits$type[grep("max.spread", fits$label)] = "max.spread"
 fits$tree.size =as.numeric(sapply(strsplit(fits$label, "\\."), `[`, 2))
 
-#save(fits, file="fitted-solns.Rdata")
-#load("fitted-solns.Rdata")
 
 ggarrange(
   ggplot(fits, aes(x=type, y=S, color=factor(L), shape=factor(tree.size))) + geom_point(position = position_dodge(width = 0.5)),
