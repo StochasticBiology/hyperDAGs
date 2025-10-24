@@ -5,6 +5,7 @@ library(ggplotify)
 library(ggpubr)
 library(igraph)
 library(pheatmap)
+library(ggraph)
 
 # functions for reading data and plotting
 srcfile <- system.file("scripts", "get_data.R", package = "hyperdags")
@@ -77,7 +78,7 @@ for(expt in c("inline", "TBsimp", "TB", "CGH", "cancer", "mtDNA", "ptDNA")) {
 }
 
 #save(expt.out, file="expt-out.Rdata")
-#load("expt-out.Rdata")
+load("expt-out.Rdata")
 
 ### the following section produces graphical output for the article
 
@@ -116,29 +117,62 @@ print(ggarrange(
 )
 dev.off()
 
+w = plot_weights(expt.out[["TB"]]$rewired.graph, thresh=3,
+                 labels = c("INH", "RIF", "PZA", "EMB", "STR", "AMI", "CAP",
+                            "MOX", "OFL", "PRO"),
+                 edge.label.size = 4,
+                 check.overlaps = TRUE,
+                 orient="along")
+
 # full TB plot
 png("fig-tb.png", width=1200*sf, height=500*sf, res=72*sf)
-w = plot_weights(expt.out[[3]]$best.graph,
+w = plot_weights(expt.out[["TB"]]$best.graph, thresh=10,
                  labels = c("INH", "RIF", "PZA", "EMB", "STR", "AMI", "CAP",
-                            "MOX", "OFL", "PRO"))
-print(ggarrange(plot_stage_p(expt.out[[3]]$best.graph) + scale.y + title.style,
+                            "MOX", "OFL", "PRO"),
+                 edge.label.size = 4,
+                 check.overlaps = TRUE,
+                 orient="along")
+print(ggarrange(plot_stage_p(expt.out[["TB"]]$best.graph) + scale.y + title.style,
                 w$thresh.plot,
                 labels=c("C", "D")))
 dev.off()
 
+png("fig-tb-new.png", width=700*sf, height=500*sf, res=72*sf)
+w = plot_weights(expt.out[["TB"]]$best.graph, thresh=8,
+                 labels = c("INH", "RIF", "PZA", "EMB", "STR", "AMI", "CAP",
+                            "MOX", "OFL", "PRO"),
+                 edge.label.size = 4.5,
+                 check.overlaps = TRUE,
+                 orient="along")
+print(w$thresh.plot)
+dev.off()
+
 # cancer progression plot. to match previous research we rotate the visualisations here
 png("fig-cancer.png", width=1000*sf, height=500*sf, res=72*sf)
-w = plot_weights(expt.out[[5]]$best.graph,
+w = plot_weights(expt.out[["cancer"]]$best.graph,
                  labels = c("FLT3", "NPM1", "WT1", "DNMT3A", "KRAS", "NRAS", "RUNX1",
                             "IDH1", "IDH2", "PTPN11", "SRSF2", "ASXL1", "BCOR", "STAG2",
                             "TP53", "U2AF1", "SF3B1", "TET2", "CSF3R", "JAK2", "GATA2",
                             "EZH2", "PPM1D", "SETBP1", "KIT", "CBL", "PHF6", "MYC", "ETV6",
-                            "MPL", "SMC3"))
-print(ggarrange(                 plot_stage_p(expt.out[[5]]$best.graph) + coord_flip() + scale.y + scale_y_reverse() + title.style+theme(plot.margin = margin(t = 1, r = 1, b = 1, l = 1)),
+                            "MPL", "SMC3"), orient="along")
+print(ggarrange(                 plot_stage_p(expt.out[["cancer"]]$best.graph) + coord_flip() + scale.y + scale_y_reverse() + title.style+theme(plot.margin = margin(t = 1, r = 1, b = 1, l = 1)),
                                  w$thresh.plot + scale_y_reverse() + coord_flip()+theme(plot.margin = margin(t = 1, r = 1, b = 1, l = 1)),
                                  w$thresh.plot+coord_flip() + scale_y_reverse() + theme(plot.margin = margin(t = 1, r = 1, b = 1, l = 1)),
                                  nrow=1, labels = c("A", "B", "C"))
 )
+dev.off()
+
+png("fig-cancer-new.png", width=700*sf, height=500*sf, res=72*sf)
+w = plot_weights(expt.out[["cancer"]]$best.graph,
+                 labels = c("FLT3", "NPM1", "WT1", "DNMT3A", "KRAS", "NRAS", "RUNX1",
+                            "IDH1", "IDH2", "PTPN11", "SRSF2", "ASXL1", "BCOR", "STAG2",
+                            "TP53", "U2AF1", "SF3B1", "TET2", "CSF3R", "JAK2", "GATA2",
+                            "EZH2", "PPM1D", "SETBP1", "KIT", "CBL", "PHF6", "MYC", "ETV6",
+                            "MPL", "SMC3"), orient="along")
+print(w$thresh.plot +
+        scale_y_reverse() +
+        coord_flip()+
+        theme(plot.margin = margin(t = 1, r = 1, b = 1, l = 1)) )
 dev.off()
 
 # organelle DNA plot
