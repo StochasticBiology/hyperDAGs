@@ -78,7 +78,8 @@ for(expt in c("inline", "TBsimp", "TB", "CGH", "cancer", "mtDNA", "ptDNA")) {
 }
 
 #save(expt.out, file="expt-out.Rdata")
-load("../../expt-out.Rdata")
+expt.out.file = system.file("extdata", "expt-out.Rdata", package="hyperdags")
+load(expt.out.file)
 
 ### the following section produces graphical output for the article
 

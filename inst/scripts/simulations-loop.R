@@ -6,7 +6,6 @@ library(ggpubr)
 
 set.seed(1)
 
-
 # get "null hypothesis" statistics for TB-like dataset
 r.sim.df = data.frame()
 for(i in 1:10) {
@@ -41,58 +40,70 @@ x.set = tree.set = list()
 fits.raw = data.frame()
 data.plots = list()
 
-for(L in c(3, 5, 7, 9, 20)) {
-  for(tree.size in c(32, 64, 128)) {
-    for(dynamics in dyn.set) {
-      if(dynamics == "random" | dynamics == "spread") {
-        n.seed = 5
-      } else {
-        n.seed = 1
-      }
-      for(seed in 1:n.seed) {
-        set.seed(seed)
-        expt.label = paste0(L, ".", tree.size, ".", dynamics, ".", seed, collapse="")
-        message(expt.label)
-        ancnames[[expt.label]] = c()
-        descnames[[expt.label]] = c()
+run.sims = TRUE
 
-        # the dynamics we'll "simulate" on a star phlogeny
-        if(dynamics %in% star.phylo) {
-          my.tree = star_tree(tree.size)
-          descnames[[expt.label]] = rep(binary_strings_with_k_ones(L, floor(L/2)), length.out = tree.size-1)
-          ancnames[[expt.label]] = rep(binary_strings_with_k_ones(L, 0), length.out = tree.size-1)
-          if(dynamics == "spread") {
-            descnames[[expt.label]][1:floor((tree.size-1)/2)] = random_binary_strings(L, floor((tree.size-1)/2))
-          }
-          if(dynamics == "bilinear") {
-            descnames[[expt.label]] = bilinear_binary_strings(L, tree.size-1)
-          }
-          x = strsplit(descnames[[expt.label]], split="")
-          x[[length(x)+1]] = strsplit(ancnames[[expt.label]][1], split="")[[1]]
-          x = lapply(x, as.numeric)
+if(run.sims == TRUE) {
+  for(L in c(3, 5, 7, 9, 20)) {
+    for(tree.size in c(32, 64, 128)) {
+      for(dynamics in dyn.set) {
+        if(dynamics == "random" | dynamics == "spread") {
+          n.seed = 5
         } else {
-          # otherwise, we'll simulate a random phylogeny with these dynamics
-          r.set = simulate_accumulation(tree.size, L, dynamics=dynamics)
-          x = r.set[["x"]]
-          my.tree = r.set[["my.tree"]]
-          ancnames[[expt.label]] = r.set[["ancnames"]]
-          descnames[[expt.label]] = r.set[["descnames"]]
+          n.seed = 1
         }
+        for(seed in 1:n.seed) {
+          set.seed(seed)
+          expt.label = paste0(L, ".", tree.size, ".", dynamics, ".", seed, collapse="")
+          message(expt.label)
+          ancnames[[expt.label]] = c()
+          descnames[[expt.label]] = c()
+
+          # the dynamics we'll "simulate" on a star phlogeny
+          if(dynamics %in% star.phylo) {
+            my.tree = star_tree(tree.size)
+            descnames[[expt.label]] = rep(binary_strings_with_k_ones(L, floor(L/2)), length.out = tree.size-1)
+            ancnames[[expt.label]] = rep(binary_strings_with_k_ones(L, 0), length.out = tree.size-1)
+            if(dynamics == "spread") {
+              descnames[[expt.label]][1:floor((tree.size-1)/2)] = random_binary_strings(L, floor((tree.size-1)/2))
+            }
+            if(dynamics == "bilinear") {
+              descnames[[expt.label]] = bilinear_binary_strings(L, tree.size-1)
+            }
+            x = strsplit(descnames[[expt.label]], split="")
+            x[[length(x)+1]] = strsplit(ancnames[[expt.label]][1], split="")[[1]]
+            x = lapply(x, as.numeric)
+          } else {
+            # otherwise, we'll simulate a random phylogeny with these dynamics
+            r.set = simulate_accumulation(tree.size, L, dynamics=dynamics)
+            x = r.set[["x"]]
+            my.tree = r.set[["my.tree"]]
+            ancnames[[expt.label]] = r.set[["ancnames"]]
+            descnames[[expt.label]] = r.set[["descnames"]]
+          }
+        }
+        solns[[expt.label]] = simplest_DAG(ancnames[[expt.label]], descnames[[expt.label]])
+        fits.raw = rbind(fits.raw, cbind(data.frame(label=expt.label),
+                                         fit_properties(solns[[expt.label]], verbose=FALSE)))
+        x.set[[expt.label]] = x
+        tree.set[[expt.label]] = my.tree
       }
-      solns[[expt.label]] = simplest_DAG(ancnames[[expt.label]], descnames[[expt.label]])
-      fits.raw = rbind(fits.raw, cbind(data.frame(label=expt.label),
-                                       fit_properties(solns[[expt.label]], verbose=FALSE)))
-      x.set[[expt.label]] = x
-      tree.set[[expt.label]] = my.tree
     }
   }
+
+  save(fits, file="sims-fits.Rdata")
+  save(solns, file="sims-solns.Rdata")
+  save(x.set, file="sims-x-set.Rdata")
+  save(tree.set, file="sims-tree-set.Rdata")
+} else {
+  sims.fits.file = system.file("extdata", "sims-fits.Rdata", package="hyperdags")
+  load(sims.fits.file)
+  sims.solns.file = system.file("extdata", "sims-solns.Rdata", package="hyperdags")
+  load(sims.solns.file)
+  sims.x.set.file = system.file("extdata", "sims-x-set.Rdata", package="hyperdags")
+  load(sim.x.set.file)
+  sims.tree.set.file = system.file("extdata", "sims-tree-set.Rdata", package="hyperdags")
+  load(sim.tree.set.file)
 }
-
-save(fits, file="sims-fits.Rdata")
-save(solns, file="sims-solns.Rdata")
-save(x.set, file="sims-x-set.Rdata")
-save(tree.set, file="sims-tree-set.Rdata")
-
 
 #### pull example for simple demo
 
