@@ -23,7 +23,7 @@ sf = 3
 expt.index = 0
 expt.out = list()
 
-run.sims = TRUE
+run.sims = FALSE
 
 if(run.sims == TRUE) {
   # mtDNA case study takes some minutes; ptDNA will take more
@@ -138,8 +138,8 @@ dev.off()
 tb.data.file = system.file("extdata", "tb-post-inference.Rdata", package="hyperdags")
 load(tb.data.file)
 
-old.tb.data = plotHypercube.curated.tree(src.data,font.size = 3)
-old.tb.plot = plotHypercube.sampledgraph2(fitted.model, edge.label.size=4, truncate = 6,
+old.tb.data = plotHypercube.curated.tree(old_tb_data[[1]],font.size = 3)
+old.tb.plot = plotHypercube.sampledgraph2(old_tb_data[[2]], edge.label.size=4, truncate = 6,
                                           edge.label.angle = "along", node.labels=FALSE,
                                           no.times=TRUE) + theme(legend.position = "none") +
   theme(plot.margin = unit(c(0, 0., 0, 0.), "cm"))
@@ -195,6 +195,7 @@ dev.off()
 
 cancer.data.file = system.file("extdata", "cancer-post-inference.Rdata", package="hyperdags")
 load(cancer.data.file)
+
 g.cancer.graph2 = plotHypercube.sampledgraph2(cancer.data[[1]], use.arc = FALSE, featurenames = cancer.data[[2]],
                                               edge.label.size=3.5, edge.label.angle = "along", node.labels=FALSE,
                                               no.times=TRUE, small.times=FALSE,
