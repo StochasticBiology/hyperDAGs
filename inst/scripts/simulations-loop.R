@@ -69,7 +69,7 @@ if(run.sims == TRUE) {
     }
   }
 
-  save(fits, file="sims-fits.Rdata")
+  save(fits.raw, file="sims-fits.Rdata")
   save(solns, file="sims-solns.Rdata")
   save(x.set, file="sims-x-set.Rdata")
   save(tree.set, file="sims-tree-set.Rdata")
