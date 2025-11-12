@@ -45,12 +45,22 @@ mro.r.sim.df = rbind(mro.r.sim.df, fit_properties(mro.soln))
 sum(mro.df[,2:ncol(mro.df)])
 mro.n1s
 
-ggarrange(plotHypercube.curated.tree(mro.c),
+mro.plot = ggarrange(plotHypercube.curated.tree(mro.c),
           plot_tree_data(mro.r.set$my.tree, mro.r.set$x),
-          plot_stage_gen(mro.soln.real$best.graph),
-          plot_stage_gen(mro.soln$best.graph))
+          plot_stage_gen(mro.soln.real$best.graph, label.style = "points", label.size=1) +
+            labs(caption=paste0("B = 10, S' = 0.77", collapse="")) +
+            theme(plot.caption = element_text(hjust = 0.5)),
+          plot_stage_gen(mro.soln$best.graph, label.style="points", label.size=1) +
+            labs(caption=paste0("B = 33 ± 4, S' = 0.57 ± 0.04", collapse="")) +
+            theme(plot.caption = element_text(hjust = 0.5)),
+          labels = c("A", "B"))
 
-fit_properties(mro.soln)
+sf = 2
+png("mro-plot.png", width=600*sf, height=400*sf, res=72*sf)
+print(mro.plot)
+dev.off()
+
+fit_properties(mro.soln.real)
 mro.r.sim.df
 
 ########## homogeneous

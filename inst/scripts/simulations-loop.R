@@ -211,30 +211,6 @@ print(simple.plot)
 dev.off()
 
 #### pull examples for demonstrations of different dynamics
-
-names.demo.plot = names(x.set)[grep("7.32.*1", names(x.set))]
-
-margin.shift = 25
-demo.soln.plots = demo.data.plots = list()
-for(name in names.demo.plot) {
-  this.x = x.set[[name]]
-  this.tree = tree.set[[name]]
-  demo.data.plots[[name]] = plot_tree_data(this.tree, this.x)
-  this.soln = solns[[name]]
-  demo.soln.plots[[name]] = plot_stage_gen(this.soln$best.graph,
-                                      label.size = 4) +
-    coord_cartesian(clip = "off") + theme(plot.margin = margin(margin.shift, margin.shift, margin.shift, margin.shift))
-}
-
-sim.plot = ggarrange(
-  ggarrange(plotlist = demo.data.plots, nrow=1),
-  ggarrange(plotlist = demo.soln.plots, nrow=1), nrow = 2
-)
-
-png("sim-plot-data.png", width=1300*sf, height=600*sf, res=72*sf)
-print(sim.plot)
-dev.off()
-
 ### statistics under different dynamics
 
 fits = fits.raw
@@ -246,6 +222,40 @@ fits$type[grep("mixed", fits$label)] = "mixed"
 fits$type[grep("max.spread", fits$label)] = "max.spread"
 fits$tree.size =as.numeric(sapply(strsplit(fits$label, "\\."), `[`, 2))
 
+level.order = c("linear", "bilinear", "mixed", "random", "spread", "max.spread")
+
+#names.demo.plot = names(x.set)[grep("7.32.*1", names(x.set))]
+names.demo.plot = paste0("7.32.", level.order, ".1")
+
+margin.shift = 25
+demo.soln.plots = demo.data.plots = list()
+for(name in names.demo.plot) {
+  this.x = x.set[[name]]
+  this.tree = tree.set[[name]]
+  demo.data.plots[[name]] = plot_tree_data(this.tree, this.x)
+  this.soln = solns[[name]]
+  if(grepl("linear", name)) {
+  demo.soln.plots[[name]] = plot_stage_gen(this.soln$best.graph,
+                                      label.size = 4) +
+    coord_cartesian(clip = "off") + theme(plot.margin = margin(margin.shift, margin.shift, margin.shift, margin.shift))
+  } else {
+    demo.soln.plots[[name]] = plot_stage_gen(this.soln$best.graph,
+                                             label.style = "points",
+                                             label.size = 2) +
+      coord_cartesian(clip = "off") + theme(plot.margin = margin(margin.shift, margin.shift, margin.shift, margin.shift))
+  }
+}
+
+sim.plot = ggarrange(
+  ggarrange(plotlist = demo.data.plots, nrow=1),
+  ggarrange(plotlist = demo.soln.plots, nrow=1), nrow = 2
+)
+
+png("sim-plot-data.png", width=1000*sf, height=600*sf, res=72*sf)
+print(sim.plot)
+dev.off()
+
+#########
 
 ggarrange(
   ggplot(fits, aes(x=type, y=S, color=factor(L), shape=factor(tree.size))) + geom_point(position = position_dodge(width = 0.5)),
@@ -253,7 +263,7 @@ ggarrange(
   ggplot(fits, aes(x=type, y=Sstar, color=factor(L), shape=factor(tree.size))) + geom_point(position = position_dodge(width = 0.5)),
   nrow=3)
 
-sprime.plot = ggplot(fits, aes(x=type, y=Sprime, color=factor(L), shape=factor(tree.size))) + geom_point(position = position_dodge(width = 0.5)) +
+sprime.plot = ggplot(fits, aes(x=factor(type, levels=level.order), y=Sprime, color=factor(L), shape=factor(tree.size))) + geom_point(position = position_dodge(width = 0.5), size=4) +
   theme_minimal() +
   theme(legend.position="bottom") +
   labs(x = "Dynamics", y = "S'", color = "L:", shape = "n:")
@@ -261,6 +271,19 @@ sprime.plot = ggplot(fits, aes(x=type, y=Sprime, color=factor(L), shape=factor(t
 sf = 3
 png("sprime-plot.png", width=400*sf, height=200*sf, res=72*sf)
 print(sprime.plot)
+dev.off()
+
+both.plot = ggarrange(
+  ggarrange(plotlist = demo.data.plots, nrow=1, labels=c("A", "B", "C", "D", "E", "F")),
+  ggarrange(plotlist = demo.soln.plots, nrow=1),
+  sprime.plot+theme_minimal(base_size=20)+
+    theme(legend.position="bottom"), labels=c("", "", "G"),
+  heights=c(1,1,1.5), nrow = 3
+)
+
+sf = 3
+png("sprime-both-plot.png", width=1000*sf, height=700*sf, res=72*sf)
+print(both.plot)
 dev.off()
 
 margin.shift = 25

@@ -177,11 +177,13 @@ dev.off()
 
 #########
 
+png("sim-plot-data-alls.png", width=600*sf, height=600*sf, res=72*sf)
 ggarrange(
-  ggplot(fits, aes(x=type, y=S, color=factor(L), shape=factor(tree.size))) + geom_point(position = position_dodge(width = 0.5)),
+  ggplot(fits, aes(x=type, y=S, color=factor(L), shape=factor(tree.size))) + geom_point(position = position_dodge(width = 0.5)) ,#+ theme(legend.position="none"),
   ggplot(fits, aes(x=type, y=Sprime, color=factor(L), shape=factor(tree.size))) + geom_point(position = position_dodge(width = 0.5)),
-  ggplot(fits, aes(x=type, y=Sstar, color=factor(L), shape=factor(tree.size))) + geom_point(position = position_dodge(width = 0.5)),
+  ggplot(fits, aes(x=type, y=Sstar, color=factor(L), shape=factor(tree.size))) + geom_point(position = position_dodge(width = 0.5)),# + theme(legend.position="none"),
   nrow=3)
+dev.off()
 
 sprime.plot = ggplot(fits, aes(x=factor(type, levels=level.order), y=Sprime, color=factor(L), shape=factor(tree.size))) + geom_point(position = position_dodge(width = 0.5), size=4) +
   theme_minimal() +

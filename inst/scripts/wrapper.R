@@ -78,7 +78,7 @@ for(expt in c("inline", "TBsimp", "TB", "CGH", "cancer", "mtDNA", "ptDNA")) {
 }
 
 #save(expt.out, file="expt-out.Rdata")
-load("expt-out.Rdata")
+load("../../expt-out.Rdata")
 
 ### the following section produces graphical output for the article
 
@@ -137,6 +137,27 @@ print(ggarrange(plot_stage_p(expt.out[["TB"]]$best.graph) + scale.y + title.styl
                 labels=c("C", "D")))
 dev.off()
 
+library(hypertrapsct)
+library(igraph)
+library(ggtree)
+library(ggraph)
+library(stringr)
+### obv not best representation here
+load("~/Dropbox/Documents/2024_Projects/HyperEvol/Perspective/EvAM-MDR-main/post-inference.Rdata")
+old.tb.data = plotHypercube.curated.tree(src.data,font.size = 3)
+old.tb.plot = plotHypercube.sampledgraph2(fitted.model, edge.label.size=4, truncate = 6,
+                            edge.label.angle = "along", node.labels=FALSE,
+                            no.times=TRUE) + theme(legend.position = "none") +
+  theme(plot.margin = unit(c(0, 0., 0, 0.), "cm"))
+
+
+oct.plot.tb = ggarrange(old.tb.data, w$thresh.plot, old.tb.plot,
+          nrow=1, widths=c(0.75,1,1), labels=c("Ai", "ii", "iii"))
+
+png("oct-plot-tb.png", width=800*sf, height=300*sf, res=72*sf)
+print(oct.plot.tb)
+dev.off()
+
 png("fig-tb-new.png", width=700*sf, height=500*sf, res=72*sf)
 w = plot_weights(expt.out[["TB"]]$best.graph, thresh=8,
                  labels = c("INH", "RIF", "PZA", "EMB", "STR", "AMI", "CAP",
@@ -162,21 +183,54 @@ print(ggarrange(                 plot_stage_p(expt.out[["cancer"]]$best.graph) +
 )
 dev.off()
 
-png("fig-cancer-new.png", width=700*sf, height=500*sf, res=72*sf)
-w = plot_weights(expt.out[["cancer"]]$best.graph,
+w.cancer = plot_weights(expt.out[["cancer"]]$best.graph,check.overlaps = TRUE,
                  labels = c("FLT3", "NPM1", "WT1", "DNMT3A", "KRAS", "NRAS", "RUNX1",
                             "IDH1", "IDH2", "PTPN11", "SRSF2", "ASXL1", "BCOR", "STAG2",
                             "TP53", "U2AF1", "SF3B1", "TET2", "CSF3R", "JAK2", "GATA2",
                             "EZH2", "PPM1D", "SETBP1", "KIT", "CBL", "PHF6", "MYC", "ETV6",
-                            "MPL", "SMC3"), orient="along")
-print(w$thresh.plot +
-        scale_y_reverse() +
-        coord_flip()+
-        theme(plot.margin = margin(t = 1, r = 1, b = 1, l = 1)) )
+                            "MPL", "SMC3"), orient="along", edge.label.size = 4)
+
+png("fig-cancer-new.png", width=800*sf, height=500*sf, res=72*sf)
+ggarrange(oct.plot.tb,
+          w.cancer$thresh.plot +
+      #  scale_y_reverse() +
+      #  coord_flip()+
+        theme(plot.margin = margin(t = 1, r = 1, b = 1, l = 1)) ,
+        nrow=2, heights=c(1,0.75), labels=c("", "B"))
 dev.off()
+
+load("~/Dropbox/Documents/2024_Projects/HyperEvol/Workspaces/cancer-mar-8.RData")
+g.cancer.graph2 = plotHypercube.sampledgraph2(parallelised.runs[[4]], use.arc = FALSE, featurenames = AML[[4]],
+                                              edge.label.size=3.5, edge.label.angle = "along", node.labels=FALSE,
+                                              no.times=TRUE, small.times=FALSE,
+                                              thresh=0.008, truncate=5,
+                                              use.timediffs = FALSE, edge.check.overlap = TRUE) +
+  theme(legend.position="none")
+
+png("fig-cancer-comp-new.png", width=1000*sf, height=500*sf, res=72*sf)
+ggarrange(w.cancer$thresh.plot +
+              scale_y_reverse() +
+              coord_flip(),
+            g.cancer.graph2 +  coord_flip() + scale_y_reverse(),
+          nrow=1)
+dev.off()
+
+png("fig-cancer-comp-new.png", width=1000*sf, height=500*sf, res=72*sf)
+ggarrange(w.cancer$thresh.plot ,
+          g.cancer.graph2, nrow=2)
+dev.off()
+
+fit_properties(expt.out[["cancer"]])
 
 # organelle DNA plot
 
+transform_name = function(x) {
+  parts <- strsplit(x, " ")[[1]]
+  genus <- paste0(toupper(substr(parts[1], 1, 1)), ".")
+  species <- parts[2]
+  result <- paste("·", genus, species)
+  return(result)
+}
 # highlight some species of interest
 mt.orgs = c("homo sapiens", "arabidopsis thaliana", "reclinomonas americana",
          "saccharomyces cerevisiae", "plasmodium falciparum", "physcomitrium patens",
@@ -190,6 +244,18 @@ for(i in 1:length(mt.orgs)) {
   mt.labs = rbind(mt.labs, data.frame(Species = mt.orgs[i], label=mt.names[which(mt.raw$Species == mt.orgs[i])]))
 }
 
+
+margin.shift = 25
+mt.labs$Species = sapply(mt.labs$Species, transform_name)
+mt.plot.new = plot_stage_gen(expt.out[[6]]$best.graph,
+               v.labels=mt.labs,
+               label.style="points",
+               label.size = 3.5,
+               edge.alpha = 0.3,
+               point.size = 0.) +
+  coord_cartesian(clip = "off") +
+  theme(plot.margin = margin(margin.shift, margin.shift, 0,0))
+
 # same for plastids
 pt.orgs = c("arabidopsis thaliana", "physcomitrium patens", "hydnora visseri", "parasitaxus usta",
             "polysiphonia elongata", "gracilaria changii", "cladosiphon okamuranus")
@@ -201,12 +267,29 @@ pt.labs = data.frame()
 for(i in 1:length(pt.orgs)) {
   pt.labs = rbind(pt.labs, data.frame(Species = pt.orgs[i], label=pt.names[which(pt.raw$Species == pt.orgs[i])]))
 }
+pt.labs$Species = sapply(pt.labs$Species, transform_name)
+pt.plot.new = plot_stage_gen(expt.out[[7]]$best.graph,
+               v.labels=pt.labs,
+               label.style="points",
+               label.size = 3.5,
+               edge.alpha = 0.3,
+               point.size = 0.) +
+  coord_cartesian(clip = "off") +
+  theme(plot.margin = margin(margin.shift, margin.shift, 0,0))
 
+plot_stage_p(expt.out[[6]]$best.graph, v.labels=mt.labs)
+
+margin.shift = 25
 # plot the solution, with labelled species highlights
-png("fig-odna.png", width=1000*sf, height=1000*sf, res=72*sf)
-print(ggarrange(plot_stage_p(expt.out[[6]]$best.graph, v.labels=mt.labs) + title.style,
-                plot_stage_p(expt.out[[7]]$best.graph, v.labels=pt.labs) + title.style,
-                nrow = 2,
+png("fig-odna-rows.png", width=400*sf, height=400*sf, res=72*sf)
+print(ggarrange(mt.plot.new ,
+                pt.plot.new  , nrow = 2,
+                labels=c("A", "B")))
+dev.off()
+
+png("fig-odna-cols.png", width=800*sf, height=300*sf, res=72*sf)
+print(ggarrange(mt.plot.new ,
+                pt.plot.new , nrow = 1,
                 labels=c("A", "B")))
 dev.off()
 
@@ -271,6 +354,14 @@ for(oDNA.expt in 1:3) {
                                   treeheight_row = 0, treeheight_col = 0,
                                   fontsize_row = 6, fontsize_col = 6))
 }
+
+png("oDNA-both-new.png", width=800*sf, height=600*sf, res=72*sf)
+ggarrange(mt.plot.new, pt.plot.new,
+          oDNA.g[[1]] + theme_minimal(),
+         oDNA.g[[2]] + theme_minimal(),
+        nrow = 2, ncol=2, labels=c("A", "B", "C", "D")
+          )
+dev.off()
 
 png("oDNA-points.png", width=800*sf, height=400*sf, res=72*sf)
 ggarrange(oDNA.g[[1]] + theme_minimal(), oDNA.g[[2]] + theme_minimal(),
