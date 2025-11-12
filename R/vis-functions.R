@@ -139,6 +139,8 @@ plot_stage_p = function(graphD, v.labels = data.frame(Species=NA)) {
 #' @param graphD graph to plot
 #' @param v.labels data frame of vertex labels (optional)
 #' @param label.size numeric node label size (default chooses according to length)
+#' @param point.size numeric node point size (default 0)
+#' @param edge.alpha numeric edge transparency (default 1)
 #' @param label.style character node plot style ("full" binary strings, "points" just points, or "labels" individual codes for nodes, default chooses according to length)
 #' @return ggarrange object containing plots
 #' @examples
@@ -148,6 +150,8 @@ plot_stage_p = function(graphD, v.labels = data.frame(Species=NA)) {
 plot_stage_gen = function(graphD,
                           v.labels = data.frame(Species=NA),
                           label.size = 0,
+                          point.size = 0,
+                          edge.alpha = 1,
                           label.style = 0) {
   # extract graphs from algorithm output and assign layers
   graphD.layers = sapply(igraph::V(graphD)$name, stringr::str_count, "1")
@@ -189,17 +193,17 @@ plot_stage_gen = function(graphD,
     }
   }
   g = ggraph::ggraph(graphD, layout="sugiyama", layers=graphD.layers) +
-    ggraph::geom_edge_link(color="#CCCCCC") +
+    ggraph::geom_edge_link(color="#CCCCCC", alpha = edge.alpha) +
     ggraph::geom_node_text(ggplot2::aes(label=plotname), size=label.size, angle=45, hjust=0) +
     # ggplot2::ggtitle(paste0("B = ", branching_count(graphD), collapse="")) +
     #  ggplot2::scale_x_continuous(expand = c(0.1, 0.1)) +
     ggplot2::theme_void() #ggraph::theme_graph()
   if(!is.na(v.labels$Species[1])) {
     g = g +
-      ggraph::geom_node_text(ggplot2::aes(label=v.label), size=2, angle=45, hjust=0)  #, check_overlap = TRUE) +
+      ggraph::geom_node_text(ggplot2::aes(label=v.label), size=label.size, angle=45, hjust=0)  #, check_overlap = TRUE) +
   }
-  if(label.style == "points") {
-    g = g + ggraph::geom_node_point(size=label.size)
+  if(label.style == "points" & point.size > 0) {
+    g = g + ggraph::geom_node_point(size=point.size)
   }
   return(g)
 }
