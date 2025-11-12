@@ -147,8 +147,10 @@ library(igraph)
 library(ggtree)
 library(ggraph)
 library(stringr)
-### obv not best representation here
-load("~/Dropbox/Documents/2024_Projects/HyperEvol/Perspective/EvAM-MDR-main/post-inference.Rdata")
+
+tb.data.file = system.file("extdata", "tb-post-inference.Rdata", package="hyperdags")
+load(tb.data.file)
+
 old.tb.data = plotHypercube.curated.tree(src.data,font.size = 3)
 old.tb.plot = plotHypercube.sampledgraph2(fitted.model, edge.label.size=4, truncate = 6,
                                           edge.label.angle = "along", node.labels=FALSE,
@@ -204,8 +206,9 @@ ggarrange(oct.plot.tb,
           nrow=2, heights=c(1,0.75), labels=c("", "B"))
 dev.off()
 
-load("~/Dropbox/Documents/2024_Projects/HyperEvol/Workspaces/cancer-mar-8.RData")
-g.cancer.graph2 = plotHypercube.sampledgraph2(parallelised.runs[[4]], use.arc = FALSE, featurenames = AML[[4]],
+cancer.data.file = system.file("extdata", "cancer-post-inference.Rdata", package="hyperdags")
+load(cancer.data.file)
+g.cancer.graph2 = plotHypercube.sampledgraph2(cancer.data[[1]], use.arc = FALSE, featurenames = cancer.data[[2]],
                                               edge.label.size=3.5, edge.label.angle = "along", node.labels=FALSE,
                                               no.times=TRUE, small.times=FALSE,
                                               thresh=0.008, truncate=5,
