@@ -19,7 +19,7 @@ x.set = tree.set = list()
 fits.raw = data.frame()
 data.plots = list()
 
-run.sims = FALSE
+run.sims = TRUE
 
 if(run.sims == TRUE) {
   for(L in c(3, 5, 7, 9, 20)) {
@@ -91,6 +91,8 @@ this.x = x.set[[name]]
 this.tree = tree.set[[name]]
 plot.1 = plot_tree_data(this.tree, this.x)
 this.soln = solns[[name]]
+
+margin.shift = 25
 
 this.soln$best.ls = layer_sum(this.soln$best.graph)
 this.soln$Sprime = fit_properties(this.soln)$Sprime
