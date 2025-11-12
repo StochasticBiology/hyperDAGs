@@ -1,9 +1,11 @@
 library(hypertrapsct)
+library(phytools)
+library(ggpubr)
 
 ### reproduce MRO paper figure
-mro.df = read.csv("../extdata/mro-barcodes-2025-2.csv")
+mro.df = read.csv(system.file("extdata/mro-barcodes-2025-2.csv", package="hyperdags"))
 mro.df[,2:ncol(mro.df)] = 1-mro.df[,2:ncol(mro.df)]
-mro.tree = read.tree("../extdata/mro-ncbi-tree-2025.nwk")
+mro.tree = read.tree(system.file("extdata/mro-ncbi-tree-2025.nwk", package="hyperdags"))
 mro.tree$tip.label = gsub("_", " ", mro.tree$tip.label)
 mro.c = curate.tree(mro.tree, mro.df)
 #mro.src = apply(mro.c$srcs, 1, paste0, collapse="")
@@ -12,9 +14,9 @@ mro.dest = apply(unique(rbind(mro.c$srcs, mro.c$dests)), 1, paste0, collapse="")
 mro.src = rep("000000000", length(mro.dest))
 
 ### more rational?
-mro.df = read.csv("../extdata/mro-barcodes-2025-1.csv")
+mro.df = read.csv(system.file("extdata/mro-barcodes-2025-1.csv", package="hyperdags"))
 mro.df[,2:ncol(mro.df)] = 1-mro.df[,2:ncol(mro.df)]
-mro.tree = read.tree("../extdata/mro-ncbi-tree-2025.nwk")
+mro.tree = read.tree(system.file("extdata/mro-ncbi-tree-2025.nwk", package="hyperdags"))
 mro.tree$tip.label = gsub("_", " ", mro.tree$tip.label)
 mro.c = curate.tree(mro.tree, mro.df)
 mro.src = apply(mro.c$srcs, 1, paste0, collapse="")

@@ -7,6 +7,10 @@ library(igraph)
 library(pheatmap)
 library(ggraph)
 
+library(hypertrapsct)
+library(ggtree)
+library(stringr)
+
 # functions for reading data and plotting
 srcfile <- system.file("scripts", "get_data.R", package = "hyperdags")
 source(srcfile)
@@ -19,7 +23,7 @@ sf = 3
 expt.index = 0
 expt.out = list()
 
-run.sims = TRUE
+run.sims = FALSE
 
 if(run.sims == TRUE) {
   # mtDNA case study takes some minutes; ptDNA will take more
@@ -86,7 +90,7 @@ title.style = theme(plot.title = element_text(
   vjust = 0 #1.5    # Adjust vertical alignment
 ))
 
-
+if(run.sims == TRUE) {
 tb.simp.data =  ggarrange(ggtexttable(tbsimp.dset.states, rows=NULL),
                           ggarrange(ggtexttable(tbsimp.dset.trans[1:(nrow(tbsimp.dset.trans)/3),], rows=NULL),
                                     ggtexttable(tbsimp.dset.trans[(nrow(tbsimp.dset.trans)/3+1):(2*nrow(tbsimp.dset.trans)/3),], rows=NULL),
@@ -109,6 +113,7 @@ print(ggarrange(
   nrow=2, heights=c(1,0.66))
 )
 dev.off()
+}
 
 w = plot_weights(expt.out[["TB"]]$rewired.graph, thresh=3,
                  labels = c("INH", "RIF", "PZA", "EMB", "STR", "AMI", "CAP",
@@ -129,12 +134,6 @@ print(ggarrange(plot_stage_p(expt.out[["TB"]]$best.graph) + scale.y + title.styl
                 w$thresh.plot,
                 labels=c("C", "D")))
 dev.off()
-
-library(hypertrapsct)
-library(igraph)
-library(ggtree)
-library(ggraph)
-library(stringr)
 
 tb.data.file = system.file("extdata", "tb-post-inference.Rdata", package="hyperdags")
 load(tb.data.file)
