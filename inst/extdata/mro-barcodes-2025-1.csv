@@ -1,0 +1,82 @@
+Organism,CI,CII,CIII,CIV,CV,PDH,DNA,TCA,Fe-S
+Acanthamoeba castellanii,1,1,1,1,1,1,1,1,1
+Aduncisulcus paluster,0,0,0,0,0,0,0,0,1
+Amoebophrya ceratii,0,1,0,1,1,1,1,1,1
+Anaerocyclidium porcatum,0,0,0,0,1,0,1,0,1
+Ancora sagittata,0,0,0,0,0,0,0,0,1
+Apolagynus cf. cucumis,0,1,0,0,0,1,1,1,1
+Apolagynus sp.,0,0,0,0,0,1,1,0,1
+Ascaris suum,1,1,1,1,1,1,1,1,1
+Blastocystis sp.,1,1,0,0,0,1,1,0,1
+Brevimastigomonas motovehiculus,1,1,0,0,1,1,1,1,1
+Carpediemonas membranifera,0,0,0,0,0,0,0,0,1
+Cantina marsupialis,0,1,0,0,0,0,0,0,1
+Cephaloidophora communis,0,1,0,0,0,0,0,1,1
+Chilodonella uncinata,1,1,1,1,1,1,1,1,1
+Chilomastix cuspidata,0,0,0,0,0,0,0,0,1
+Chlamydomonas reinhardtii,1,1,1,1,1,1,1,1,1
+Chromera velia,0,1,0,1,1,1,1,1,1
+Cryptosporidium andersoni,0,1,0,0,1,0,0,1,1
+Cryptosporidium hominis,0,0,0,0,0,0,0,0,1
+Cryptosporidium muris,0,1,0,0,1,0,0,1,1
+Cryptosporidium parvum,0,0,0,0,0,0,0,0,1
+Dysnectes brevis,0,0,0,0,0,0,0,0,1
+Encephalitozoon cuniculi,0,0,0,0,0,0,0,0,1
+Entamoeba histolytica,0,0,0,0,0,0,0,0,1
+Ergobibamus cyprinoides,0,0,0,0,0,0,0,0,1
+Euglena gracilis,1,1,1,1,1,1,1,1,1
+Fasciola hepatica,1,1,0,0,1,1,1,0,1
+Giardia intestinalis,0,0,0,0,0,0,0,0,1
+Gregarina niphandrodes,0,1,0,0,0,0,0,1,1
+Heliospora caprellae,0,1,0,0,0,0,0,1,1
+Henneguya salminicola,0,1,0,0,0,0,0,1,1
+Heterometopus sp. CSS,0,0,0,0,0,0,1,0,1
+Holophrya ovum,1,1,1,1,1,1,1,1,1
+Homo sapiens,1,1,1,1,1,1,1,1,1
+Kipferlia bialata,0,0,0,0,0,0,0,0,1
+Kudoa,1,1,1,1,1,1,1,1,1
+Lagynus cucumis,0,0,0,0,0,1,1,0,1
+Lankesteria metandrocarpae,0,1,0,0,0,0,0,0,1
+Lecudina tuzetae,0,1,0,0,0,0,0,0,1
+Leishmania tropica,1,1,1,1,1,1,1,1,1
+Mastigamoeba balamuthi,0,1,0,0,0,0,0,0,1
+Metopus contortus,0,1,0,0,0,1,1,0,1
+Metopus laminarius,0,1,0,0,0,1,0,1,1
+Mikrocytos mackini,0,0,0,0,0,0,0,0,1
+Mitosporidium sp.,0,1,1,1,1,1,1,1,1
+Monocercomonoides exilis,0,0,0,0,0,0,0,0,0
+Monocystis agilis,0,1,1,1,1,0,1,1,1
+Muranothrix gubernata,0,1,0,0,1,0,1,0,1
+Naegleria gruberi,1,1,1,1,1,1,1,1,1
+Nematocida parisii,0,0,0,0,0,1,0,0,1
+Neocallimastix frontalis,0,0,0,0,0,0,0,0,1
+Neocallimastix sp.,0,0,0,0,0,0,0,0,1
+Nyctotherus ovalis,0,1,0,0,0,0,1,0,1
+Orpinomyces sp.,0,1,0,0,1,0,1,0,1
+Parablepharisma,0,0,0,0,0,0,1,0,1
+Paratrimastix pyriformis,0,0,0,0,0,0,0,0,0
+Piromyces sp.,0,1,0,0,1,0,0,0,1
+Plagiopyla frontata,0,0,0,0,0,1,0,0,1
+Plagiopyla cf. narasimhamurtii,0,0,0,0,0,1,1,0,1
+Plasmodium falciparum,0,1,1,1,1,0,1,1,1
+Polyplicarium translucidae,0,1,0,0,0,0,0,1,1
+Polyrhabdina sp.,0,0,0,0,0,0,0,0,1
+Psalteriomonas lanterna,0,0,0,0,0,0,0,0,0
+Pterospora schizosoma,0,0,0,0,0,0,0,0,1
+Pygsuia biforma,0,1,0,0,0,0,0,0,1
+Rozella,0,1,1,1,1,1,1,1,1
+Saccharomyces cerevisiae,0,1,1,1,1,1,1,1,1
+Sawyeria marylandensis,0,0,0,0,0,0,0,0,1
+Schizosaccharomyces pombe,0,1,1,1,1,1,1,1,1
+Selenidium pygospionis,0,1,1,1,1,0,1,1,1
+Selenidium serpulae,0,1,1,1,1,0,0,1,1
+Spironucleus salmonicida,0,0,0,0,0,0,0,0,1
+Stygiella incarcerata,0,0,0,0,0,0,0,0,1
+Toxoplasma gondii,0,1,1,1,1,0,1,1,1
+Trepomonas sp.,0,0,0,0,0,0,0,0,1
+Trichomonas vaginalis,0,0,0,0,0,0,0,0,1
+Trichotokara eunicae,0,1,0,0,1,0,0,1,1
+Trimastix marina,0,0,0,0,0,0,0,0,1
+Trypanosoma brucei,1,1,1,1,1,1,1,1,1
+Viscum album,0,1,1,1,1,1,1,1,1
+Vitrella brassicaformis,0,1,1,1,1,1,1,1,1
