@@ -10,9 +10,7 @@ hyperDAG_demo <- function() {
   # get STSD
   s.dag = simplest_DAG(ancnames, descnames)
   # plot and summarise: A is SSA, B is STSD, numbers are branching counts
-  plot_stage_2(s.dag)
-  fit_properties(s.dag)
-  transitions_spanned(s.dag$best.graph, ancnames, descnames)
+  return(plot_stage_2(s.dag))
 }
 
 #' Produce the set of binary strings of length nstr with k 1's
