@@ -23,7 +23,7 @@ sf = 3
 expt.index = 0
 expt.out = list()
 
-run.sims = FALSE
+run.sims = TRUE
 
 if(run.sims == TRUE) {
   # mtDNA case study takes some minutes; ptDNA will take more
