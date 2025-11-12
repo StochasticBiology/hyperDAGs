@@ -6,27 +6,6 @@ library(ggpubr)
 
 set.seed(1)
 
-# get "null hypothesis" statistics for TB-like dataset
-r.sim.df = data.frame()
-for(i in 1:10) {
-  r.set = simulate_accumulation(floor(427/2), 10)
-  soln = simplest_DAG(r.set[["ancnames"]], r.set[["descnames"]])
-  r.sim.df = rbind(r.sim.df, fit_properties(soln))
-}
-ggplot() + geom_violin(data=r.sim.df, aes(x=L,y=Sprime)) + geom_point(data=fit_properties(expt.out[["TB"]]), aes(x=L,y=Sprime))
-
-# get "null hypothesis" statistics for CGH-like dataset
-r.sim.df = data.frame()
-for(i in 1:20) {
-  r.set = simulate_accumulation(1+ceiling(87/2), 7)
-  soln = simplest_DAG(r.set[["ancnames"]], r.set[["descnames"]])
-  r.sim.df = rbind(r.sim.df, fit_properties(soln))
-}
-ggplot() + geom_violin(data=r.sim.df, aes(x=L,y=Sprime)) + geom_point(data=fit_properties(expt.out[["CGH"]]), aes(x=L,y=Sprime))
-plot_stage_gen(expt.out[["CGH"]]$best.graph)
-fit_properties(expt.out[["CGH"]])
-r.sim.df
-
 L = 10
 dyn.set = c("linear", "random", "mixed", "bilinear", "max.spread", "spread")
 star.phylo = c("spread", "max.spread", "bilinear")
