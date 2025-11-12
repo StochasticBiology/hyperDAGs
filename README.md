@@ -11,7 +11,7 @@ Given a dataset of *paired* binary string observations, can we construct a DAG w
 
 In `R/`, `paired-observations.R` currently contains Kostas' implementation of the Gutin algorithm and Iain's developments on top of this, attempting to compute this picture and also "simplify" the result in the sense that branch points are shifted down the graph as much as possible. Plot and helper functions also included. 
 
-In `inst/scripts/`, `dataset-analysis.R` and the accompanying datafiles provide some scientific case studies, curating input data and wrapping the analysis, as well as casting data in a consistent form and comparing an alternative approach in Python. `simulation-loop.R` contains simulation code and analysis to explore the behaviour of the approach in gold-standard cases. The repository also contains some datasets for demonstrations in `inst/extdata` (see References).
+In `inst/scripts/` -- which you can find after installation and loading with `system.file("scripts", package="hyperdags")` -- `dataset-analysis.R` and the accompanying datafiles provide some scientific case studies, curating input data and wrapping the analysis, as well as casting data in a consistent form and comparing an alternative approach in Python. `simulation-loop.R` contains simulation code and analysis to explore the behaviour of the approach in gold-standard cases. The repository also contains some datasets for demonstrations in `inst/extdata` (see References).
 
 Essentials
 ----
