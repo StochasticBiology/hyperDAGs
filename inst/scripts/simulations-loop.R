@@ -19,7 +19,7 @@ x.set = tree.set = list()
 fits.raw = data.frame()
 data.plots = list()
 
-run.sims = TRUE
+run.sims = FALSE
 
 if(run.sims == TRUE) {
   for(L in c(3, 5, 7, 9, 20)) {
@@ -78,9 +78,9 @@ if(run.sims == TRUE) {
   load(sims.fits.file)
   sims.solns.file = system.file("extdata", "sims-solns.Rdata", package="hyperdags")
   load(sims.solns.file)
-  sims.x.set.file = system.file("extdata", "sims-x-set.Rdata", package="hyperdags")
+  sim.x.set.file = system.file("extdata", "sims-x-set.Rdata", package="hyperdags")
   load(sim.x.set.file)
-  sims.tree.set.file = system.file("extdata", "sims-tree-set.Rdata", package="hyperdags")
+  sim.tree.set.file = system.file("extdata", "sims-tree-set.Rdata", package="hyperdags")
   load(sim.tree.set.file)
 }
 
