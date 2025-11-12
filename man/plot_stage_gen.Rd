@@ -8,6 +8,8 @@ plot_stage_gen(
   graphD,
   v.labels = data.frame(Species = NA),
   label.size = 0,
+  point.size = 0,
+  edge.alpha = 1,
   label.style = 0
 )
 }
@@ -17,6 +19,10 @@ plot_stage_gen(
 \item{v.labels}{data frame of vertex labels (optional)}
 
 \item{label.size}{numeric node label size (default chooses according to length)}
+
+\item{point.size}{numeric node point size (default 0)}
+
+\item{edge.alpha}{numeric edge transparency (default 1)}
 
 \item{label.style}{character node plot style ("full" binary strings, "points" just points, or "labels" individual codes for nodes, default chooses according to length)}
 }
