@@ -22,6 +22,10 @@ simplest_arborescence = function(ancnames, descnames=NULL) {
 
   # sort data, this way the always the minimum nearest neighbor will be chosen
   len=stringr::str_length(names[1])
+  root = paste0(rep("0", len), collapse="")
+  if(!(root %in% names)) {
+    names = c(names, root)
+  }
   distMat=stringdist::stringsimmatrix(names,method = "hamming")
   distMat=round(len-len*distMat)
   tdistMat = distMat
@@ -42,16 +46,21 @@ simplest_arborescence = function(ancnames, descnames=NULL) {
 
   # Kostas third [our second] condition:
   set.2 = which(onecountsdiff > 0, arr.ind = TRUE)
-  set.2 = set.2[set.2[,1] < set.2[,2],]
+  set.2 = set.2[set.2[,1] < set.2[,2], , drop = FALSE]
 
   # Kostas second [our third] condition:
   set.3 = which(onecountsdiff < 0, arr.ind = TRUE)
-  set.3 = set.3[set.3[,1] < set.3[,2],]
+  set.3 = set.3[set.3[,1] < set.3[,2], , drop = FALSE]
 
   # condition 1 trumps conditions 2 and 3, so find indices unique to 2 and 3
-  unique.2 = suppressMessages( as.matrix(dplyr::anti_join(as.data.frame(set.2), as.data.frame(set.1))) )
-  unique.3 = suppressMessages( as.matrix(dplyr::anti_join(as.data.frame(set.3), as.data.frame(set.1))) )
-
+  if(nrow(set.1) == 0) {
+    unique.2 = set.2
+    unique.3 = set.3
+  } else {
+    unique.2 = suppressMessages( as.matrix(dplyr::anti_join(as.data.frame(set.2), as.data.frame(set.1))) )
+    unique.3 = suppressMessages( as.matrix(dplyr::anti_join(as.data.frame(set.3), as.data.frame(set.1))) )
+  }
+  
   # apply distMat effects of these conditions
   distMat[set.1] = len+1
   distMat[unique.2] = 2
