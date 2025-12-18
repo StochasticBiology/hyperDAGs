@@ -17,4 +17,7 @@ Imports:
     ggraph,
     igraph,
     stringdist,
-    stringr
+    stringr,
+    ape,
+    ggtree,
+    phangorn
