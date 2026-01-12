@@ -19,5 +19,6 @@ Imports:
     stringdist,
     stringr,
     ape,
-    ggtree,
     phangorn
+Remotes:
+    YuLab-SMU/ggtree
