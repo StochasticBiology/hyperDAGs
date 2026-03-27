@@ -32,7 +32,9 @@ plot_stage_gen(mro.soln.real$best.graph)
 ####### heterogeneous null model
 
 mro.char.probs = colSums(mro.df[,2:ncol(mro.df)])/nrow(mro.df)
+run.parallel = FALSE
 
+if(run.parallel == FALSE) {
 mro.n1s = c()
 mro.r.sim.df = data.frame()
 for(i in 1:10) {
@@ -46,6 +48,39 @@ mro.r.sim.df = rbind(mro.r.sim.df, fit_properties(mro.soln))
 }
 sum(mro.df[,2:ncol(mro.df)])
 mro.n1s
+} else {
+  library(parallel)
+  
+  run_sim <- function(i) {
+    mro.r.set <- simulate_accumulation(
+      0, 9,
+      use.tree = mro.c$tree,
+      accumulation.rate = 0.08,
+      dynamics = "heterogeneous",
+      char.probs = mro.char.probs
+    )
+    
+    n1 <- sum(unlist(mro.r.set$x))
+    
+    mro.soln <- simplest_DAG(
+      mro.r.set[["ancnames"]],
+      mro.r.set[["descnames"]]
+    )
+    
+    df <- fit_properties(mro.soln)
+    
+    list(n1 = n1, df = df)
+  }
+  
+  results <- mclapply(1:100, run_sim, mc.cores = detectCores())
+  
+  mro.n1s <- sapply(results, `[[`, "n1")
+  
+  mro.r.sim.df <- do.call(
+    rbind,
+    lapply(results, `[[`, "df")
+  )
+}
 
 mro.plot = ggarrange(plotHypercube.curated.tree(mro.c),
           plot_tree_data(mro.r.set$my.tree, mro.r.set$x),
@@ -64,6 +99,8 @@ dev.off()
 
 fit_properties(mro.soln.real)
 mro.r.sim.df
+mean(mro.r.sim.df$Sprime)
+sd(mro.r.sim.df$Sprime)
 
 ########## homogeneous
 
