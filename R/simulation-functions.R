@@ -174,6 +174,15 @@ simulate_accumulation = function(tree.size,
             # recall dynamics here are 00000 -> 10000 -> 11000 -> 11100 -> 11110 -> 11111
             if(runif(1) < accumulation.rate*this.branch.length) { x[[this.child]][ref[1]] = 1 }
           }
+          if(dynamics == "bilinear") {
+            if(runif(1) < accumulation.rate*this.branch.length) { 
+              if(length(ref) == L) {
+                if(runif(1) < 0.5) { x[[this.child]][1] = 1 } else { x[[this.child]][L] = 1 }
+              } else {
+                if(x[[this.child]][1] == 1) { x[[this.child]][ref[1]] = 1 } else { x[[this.child]][ref[length(ref)]] = 1 }
+              }
+            }
+          }
           if(dynamics == "random") {
             if(runif(1) < accumulation.rate*this.branch.length) { x[[this.child]][sample(ref, 1)] = 1}
           }

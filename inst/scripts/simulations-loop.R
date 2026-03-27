@@ -8,7 +8,7 @@ set.seed(1)
 
 L = 10
 dyn.set = c("linear", "random", "mixed", "bilinear", "max.spread", "spread")
-star.phylo = c("spread", "max.spread", "bilinear")
+star.phylo = c("spread", "max.spread")
 tree.size = 128
 birth.rate = 1
 death.rate = 0.5
@@ -25,11 +25,7 @@ if(run.sims == TRUE) {
   for(L in c(3, 5, 7, 9, 20)) {
     for(tree.size in c(32, 64, 128)) {
       for(dynamics in dyn.set) {
-        if(dynamics == "random" | dynamics == "spread") {
-          n.seed = 5
-        } else {
-          n.seed = 1
-        }
+        n.seed = 5
         for(seed in 1:n.seed) {
           set.seed(seed)
           expt.label = paste0(L, ".", tree.size, ".", dynamics, ".", seed, collapse="")
@@ -45,6 +41,7 @@ if(run.sims == TRUE) {
             if(dynamics == "spread") {
               descnames[[expt.label]][1:floor((tree.size-1)/2)] = random_binary_strings(L, floor((tree.size-1)/2))
             }
+            # kept for back-compatibility, but now we simulate the bilinear case explicitly
             if(dynamics == "bilinear") {
               descnames[[expt.label]] = bilinear_binary_strings(L, tree.size-1)
             }
@@ -59,12 +56,12 @@ if(run.sims == TRUE) {
             ancnames[[expt.label]] = r.set[["ancnames"]]
             descnames[[expt.label]] = r.set[["descnames"]]
           }
-        }
         solns[[expt.label]] = simplest_DAG(ancnames[[expt.label]], descnames[[expt.label]])
         fits.raw = rbind(fits.raw, cbind(data.frame(label=expt.label),
                                          fit_properties(solns[[expt.label]], verbose=FALSE)))
         x.set[[expt.label]] = x
         tree.set[[expt.label]] = my.tree
+        }
       }
     }
   }
@@ -137,7 +134,13 @@ fits$tree.size =as.numeric(sapply(strsplit(fits$label, "\\."), `[`, 2))
 level.order = c("linear", "bilinear", "mixed", "random", "spread", "max.spread")
 
 #names.demo.plot = names(x.set)[grep("7.32.*1", names(x.set))]
-names.demo.plot = paste0("7.32.", level.order, ".1")
+#names.demo.plot = paste0("7.32.", level.order, ".1")
+names.demo.plot = c("7.32.linear.2",
+                    "7.32.bilinear.1",
+                    "7.32.mixed.3",
+                    "7.32.random.4",
+                    "7.32.spread.1" ,
+                    "7.32.max.spread.1" )
 
 margin.shift = 25
 demo.soln.plots = demo.data.plots = list()
@@ -153,7 +156,7 @@ for(name in names.demo.plot) {
   } else {
     demo.soln.plots[[name]] = plot_stage_gen(this.soln$best.graph,
                                              label.style = "points",
-                                             label.size = 2) +
+                                             point.size = 1.5) +
       coord_cartesian(clip = "off") + theme(plot.margin = margin(margin.shift, margin.shift, margin.shift, margin.shift))
   }
 }

@@ -43,6 +43,8 @@ tb.soln.real = simplest_DAG(ancnames.tb, descnames.tb)
 
 tb.char.probs = colSums(final.df[,2:ncol(final.df)])/nrow(final.df)
 
+run.parallel = FALSE
+if(run.parallel == FALSE) {
 tb.n1s = c()
 tb.r.sim.df = data.frame()
 for(i in 1:10) {
@@ -57,6 +59,38 @@ for(i in 1:10) {
 
 sum(final.df[,2:ncol(final.df)])
 tb.n1s
+} else {
+  library(parallel)
+  
+  run_tb_sim <- function(i) {
+    tb.r.set <- simulate_accumulation(
+      0, 10,
+      use.tree = src.data$tree,
+      accumulation.rate = 110,
+      dynamics = "heterogeneous",
+      char.probs = tb.char.probs
+    )
+    
+    n1 <- sum(unlist(tb.r.set$x))
+    
+    tb.soln <- simplest_DAG(
+      tb.r.set[["ancnames"]],
+      tb.r.set[["descnames"]]
+    )
+    
+    df <- fit_properties(tb.soln)
+    
+    list(n1 = n1, df = df)
+  }
+  
+  tb.results <- mclapply(1:100, run_tb_sim, mc.cores = detectCores())
+  tb.n1s <- sapply(tb.results, `[[`, "n1")
+  
+  tb.r.sim.df <- do.call(
+    rbind,
+    lapply(tb.results, `[[`, "df")
+  )
+}
 
 ggarrange(plotHypercube.curated.tree(src.data),
           plot_tree_data(tb.r.set$my.tree, tb.r.set$x),
