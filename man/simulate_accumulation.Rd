@@ -29,7 +29,7 @@ simulate_accumulation(
 
 \item{accumulation.rate}{numeric rate of accumulation of features}
 
-\item{dynamics}{character type of accumulation dynamics to simulate. "random" (all characters random, max one change per branch); "linear" (single pathway dependence); "poisson" (all characters random, Poisson accumulation); "mixed" (mix of linear and random); "heterogeneous" (random, with different relative probabilities in char.probs). default "random"}
+\item{dynamics}{character type of accumulation dynamics to simulate. "random" (all characters random, max one change per branch); "linear" (single pathway dependence); "bilinear" (two competing pathways); "poisson" (all characters random, Poisson accumulation); "mixed" (mix of linear and random); "heterogeneous" (random, with different relative probabilities in char.probs). default "random"}
 
 \item{use.tree}{NULL or tree object. if tree.size is 0, the tree provided here will be used instead of simulating a new one}
 
