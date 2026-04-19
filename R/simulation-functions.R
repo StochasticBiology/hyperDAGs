@@ -114,7 +114,7 @@ plot_tree_data = function(my.tree, tip.data) {
 #' @param birth.rate numeric birth rate for birth-death process simulating random tree
 #' @param death.rate numeric death rate for birth-death process simulating random tree
 #' @param accumulation.rate numeric rate of accumulation of features
-#' @param dynamics character type of accumulation dynamics to simulate. "random" (all characters random, max one change per branch); "linear" (single pathway dependence); "poisson" (all characters random, Poisson accumulation); "mixed" (mix of linear and random); "heterogeneous" (random, with different relative probabilities in char.probs). default "random"
+#' @param dynamics character type of accumulation dynamics to simulate. "random" (all characters random, max one change per branch); "linear" (single pathway dependence); "bilinear" (two competing pathways); "poisson" (all characters random, Poisson accumulation); "mixed" (mix of linear and random); "heterogeneous" (random, with different relative probabilities in char.probs). default "random"
 #' @param use.tree NULL or tree object. if tree.size is 0, the tree provided here will be used instead of simulating a new one
 #' @param char.probs numeric vector of relative probabilities of each character acquisition, for "heterogeneous" accumulation
 #' @return a list: x (data at nodes and tips); my.tree (tree structure); ancnames (labels of ancestors for each transition); descnames (labels of descendants for each transition)
